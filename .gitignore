@@ -1,0 +1,9 @@
+.vs/
+obj/
+[Bb]in/
+[Dd]ebug*/
+[Rr]elease*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+*.7z
+*.zip
