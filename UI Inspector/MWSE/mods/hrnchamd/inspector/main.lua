@@ -1,6 +1,6 @@
 --[[
-	Mod: UI Inspector
-	Author: Hrnchamd
+    Mod: UI Inspector
+    Author: Hrnchamd
     Version: 1.3
 ]]--
 
@@ -8,6 +8,35 @@ local INT_MIN = -0x80000000
 local INT_MAX = 0x7FFFFFFF
 local prop_inherit = -0x7F33
 local this = {}
+
+local propertyType = {
+    [1] = "Integer",
+    [2] = "Float",
+    [8] = "Pointer",
+    [16] = "Property",
+    [32] = "Event Callback",
+    [64] = "Property Access Callback",
+}
+
+local function defaultPropertyFormatter(property)
+    return tostring(property.value)
+end
+
+local propertyFormatters = {
+    [1] = defaultPropertyFormatter,
+    [2] = defaultPropertyFormatter,
+    [8] = function() return "<address>" end,
+    [16] = function(property)
+        local value = property.value
+        if (type(value) == "number") then
+            return tes3ui.lookupID(value)
+        else
+            return tostring(value)
+        end
+    end,
+    [32] = function() return "<address>" end,
+    [64] = function() return "<address>" end,
+}
 
 local function formatValue(value)
     if (type(value) == "number") then
@@ -29,35 +58,6 @@ local function formatValue(value)
     end
     return tostring(value)
 end
-
-local propertyType = {
-    [1] = "Integer",
-    [2] = "Float",
-    [8] = "Pointer",
-    [16] = "Property",
-    [32] = "Event Callback",
-    [64] = "Property Access Callback",
-}
-
-local function defaultFormatter(property)
-    return tostring(property.value)
-end
-
-local valueFormatters = {
-    [1] = defaultFormatter,
-    [2] = defaultFormatter,
-    [8] = function() return "<address>" end,
-    [16] = function(property)
-        local value = property.value
-        if (type(value) == "number") then
-            return tes3ui.lookupID(value)
-        else
-            return tostring(value)
-        end
-    end,
-    [32] = function() return "<address>" end,
-    [64] = function() return "<address>" end,
-}
 
 local function updateDetailValues(element)
     local menu = tes3ui.findMenu(this.id_menu)
@@ -152,8 +152,6 @@ local function updateDetail(e)
         tes3.messageBox{ message = "UI Inspection: Failed on uid #" .. uid }
         return
     end
-    
-    local properties = element.properties
 
     pane:destroyChildren()
     pane.flowDirection = "left_to_right"
@@ -306,12 +304,10 @@ local function updateDetail(e)
     addHeading("Events")
     addDetail("consumeMouseEvents", "bool")
     addDetail("repeatKeys", "bool")
-    addHeading("Widget")
-
     addHeading("Properties")
 
     -- Create labels for properties.
-    for _, property in pairs(properties) do
+    for _, property in pairs(element.properties) do
         local t = labels:createLabel{ text = property.name }
         t.absolutePosAlignX = 1.0
 
@@ -319,14 +315,14 @@ local function updateDetail(e)
         valueBlock.autoWidth = true
         valueBlock.autoHeight = true
 
-        local valueFormatter = valueFormatters[property.type]
+        local valueFormatter = propertyFormatters[property.type]
+        local valueText = "Unknown"
         if (valueFormatter) then
-            local v = valueBlock:createLabel{ id = this.id_valueText, text = valueFormatter(property) }
-            v.minWidth = 200
-        else
-            local v = valueBlock:createLabel{ id = this.id_valueText, text = "Unknown" }
-            v.minWidth = 200
+            valueText = valueFormatter(property)
         end
+
+        local v = valueBlock:createLabel{ id = this.id_valueText, text = valueText }
+        v.minWidth = 200
 
         valueBlock:createLabel{ text = propertyType[property.type] }
     end
@@ -589,10 +585,10 @@ event.register("initialized", init)
 local modConfig = {}
 
 function modConfig.onCreate(container)
-	local pane = container:createThinBorder{}
-	pane.widthProportional = 1.0
-	pane.heightProportional = 1.0
-	pane.paddingAllSides = 12
+    local pane = container:createThinBorder{}
+    pane.widthProportional = 1.0
+    pane.heightProportional = 1.0
+    pane.paddingAllSides = 12
     pane.flowDirection = "top_to_bottom"
 
     local subhead1 = pane:createLabel{ text = "quis nostrum exercitationem ullam corporis suscipit laboriosam" }
@@ -620,7 +616,7 @@ function modConfig.onClose(container)
 end
 
 local function registerModConfig()
-	mwse.registerModConfig("UI Inspector", modConfig)
+    mwse.registerModConfig("UI Inspector", modConfig)
 end
 
 event.register("modConfigReady", registerModConfig)
