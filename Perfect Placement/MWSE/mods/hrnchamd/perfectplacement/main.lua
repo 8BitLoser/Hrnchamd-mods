@@ -266,7 +266,7 @@ local function setVerticalMode(n)
         this.height = this.boundMax.x
     end
     
-    this.position = this.position + tes3vector3.new(0, 0, this.height - prevHeight)
+    this.active.position = this.active.position + tes3vector3.new(0, 0, this.height - prevHeight)
 end
 
 -- Match vertical mode from an orientation.
