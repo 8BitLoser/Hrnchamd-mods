@@ -1,13 +1,21 @@
 --[[
     Mod: UI Inspector
     Author: Hrnchamd
-    Version: 1.3
+    Version: 1.4
 ]]--
 
 local INT_MIN = -0x80000000
 local INT_MAX = 0x7FFFFFFF
 local prop_inherit = -0x7F33
 local this = {}
+
+local contentTypeAbbreviation = {
+    ["model"] = "mdl",
+    ["text"] = "txt",
+    ["image"] = "img",
+    ["rect"] = "rect",
+    ["layout"] = "lay",
+}
 
 local propertyType = {
     [1] = "Integer",
@@ -18,13 +26,9 @@ local propertyType = {
     [64] = "Property Access Callback",
 }
 
-local function defaultPropertyFormatter(property)
-    return tostring(property.value)
-end
-
 local propertyFormatters = {
-    [1] = defaultPropertyFormatter,
-    [2] = defaultPropertyFormatter,
+    [1] = function(property) return tostring(property.value) end,
+    [2] = function(property) return string.format("%.4f", property.value):gsub("0+$", "") end,
     [8] = function() return "<address>" end,
     [16] = function(property)
         local value = property.value
@@ -437,9 +441,26 @@ local function refreshList()
             else
                 topline.paddingLeft = 15
             end
+
+            local elementContentType = topline:createLabel{ text = string.format("[%s]", contentTypeAbbreviation[child.contentType]) }
+            elementContentType.color = { 0.5, 0.5, 0.45 }
+            elementContentType.minWidth = 42
+
             local elementSelect = topline:createTextSelect{ id = this.id_elementSel, text = child.name or "(nil)" }
             elementSelect.autoHeight = true
-            
+
+            if (child.contentType == "text") then
+                local briefText
+                if (child.text:len() <= 15) then
+                    briefText = string.format("\"%s\"", child.text)
+                else
+                    briefText = string.format("\"%s...\"", child.text:sub(1, 15))
+                end
+                local elementBrief = topline:createLabel{ text = briefText }
+                elementBrief.color = { 0.5, 0.5, 0.45 }
+                elementBrief.borderLeft = 12
+            end
+
             if (#child.children >= 1) then
                 local firstid = child.children[1].id
                 if (firstid == this.id_dragFirstChild or firstid == this.id_fixedFirstChild or firstid == this.id_scrollFirstChild) then
@@ -486,12 +507,12 @@ local function createInspector(id)
     this.uiRoot = menu.parent
     menu.text = "UI Inspector"
     menu.minWidth = 100
-    menu.minHeight = 100
+    menu.minHeight = 200
     menu.width = 600
     menu.height = 800
-    menu.positionX = 150
-    menu.positionY = 360
-    
+    menu.positionX = 0.5 * menu.parent.width - menu.width
+    menu.positionY = 0.5 * menu.height
+
     if (tes3ui.stealHelpMenu) then
         -- Copy help tooltip if present
         local help = tes3ui.findHelpLayerMenu(this.id_help)
