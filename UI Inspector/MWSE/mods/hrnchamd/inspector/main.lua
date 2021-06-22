@@ -1,7 +1,7 @@
 --[[
 	Mod: UI Inspector
 	Author: Hrnchamd
-    Version: 1.2
+    Version: 1.3
 ]]--
 
 local INT_MIN = -0x80000000
@@ -29,6 +29,35 @@ local function formatValue(value)
     end
     return tostring(value)
 end
+
+local propertyType = {
+    [1] = "Integer",
+    [2] = "Float",
+    [8] = "Pointer",
+    [16] = "Property",
+    [32] = "Event Callback",
+    [64] = "Property Access Callback",
+}
+
+local function defaultFormatter(property)
+    return tostring(property.value)
+end
+
+local valueFormatters = {
+    [1] = defaultFormatter,
+    [2] = defaultFormatter,
+    [8] = function() return "<address>" end,
+    [16] = function(property)
+        local value = property.value
+        if (type(value) == "number") then
+            return tes3ui.lookupID(value)
+        else
+            return tostring(value)
+        end
+    end,
+    [32] = function() return "<address>" end,
+    [64] = function() return "<address>" end,
+}
 
 local function updateDetailValues(element)
     local menu = tes3ui.findMenu(this.id_menu)
@@ -123,6 +152,8 @@ local function updateDetail(e)
         tes3.messageBox{ message = "UI Inspection: Failed on uid #" .. uid }
         return
     end
+    
+    local properties = element.properties
 
     pane:destroyChildren()
     pane.flowDirection = "left_to_right"
@@ -276,6 +307,29 @@ local function updateDetail(e)
     addDetail("consumeMouseEvents", "bool")
     addDetail("repeatKeys", "bool")
     addHeading("Widget")
+
+    addHeading("Properties")
+
+    -- Create labels for properties.
+    for _, property in pairs(properties) do
+        local t = labels:createLabel{ text = property.name }
+        t.absolutePosAlignX = 1.0
+
+        local valueBlock = values:createBlock{}
+        valueBlock.autoWidth = true
+        valueBlock.autoHeight = true
+
+        local valueFormatter = valueFormatters[property.type]
+        if (valueFormatter) then
+            local v = valueBlock:createLabel{ id = this.id_valueText, text = valueFormatter(property) }
+            v.minWidth = 200
+        else
+            local v = valueBlock:createLabel{ id = this.id_valueText, text = "Unknown" }
+            v.minWidth = 200
+        end
+
+        valueBlock:createLabel{ text = propertyType[property.type] }
+    end
 
     menu:updateLayout()
 end
