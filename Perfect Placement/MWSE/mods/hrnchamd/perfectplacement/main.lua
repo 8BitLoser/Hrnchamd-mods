@@ -35,6 +35,7 @@ local this = {
 }
 
 local const_epsilon = 0.001
+local shadow_offset = 0.05
 
 local placeableTypes = {
     [tes3.objectType.alchemy] = true,
@@ -361,7 +362,7 @@ local function activatePlacement(e)
         -- Add shadow spot to scene.
         tes3.dataHandler.worldObjectRoot:attachChild(this.shadow_model)
         this.shadow_model.appCulled = false
-        this.shadow_model.translation = basePos + tes3vector3.new(0, 0, const_epsilon)
+        this.shadow_model.translation = basePos + tes3vector3.new(0, 0, shadow_offset)
         this.shadow_model:propagatePositionChange()
 
         event.register("simulate", simulatePlacement)
