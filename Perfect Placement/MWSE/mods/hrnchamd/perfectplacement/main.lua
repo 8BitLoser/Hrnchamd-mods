@@ -1,19 +1,19 @@
 --[[
-	Mod: Perfect Placement
-	Author: Hrnchamd
+    Mod: Perfect Placement
+    Author: Hrnchamd
     Version: 1.0
 ]]--
 
 -- Version check
 if (mwse.buildDate == nil or mwse.buildDate < 20190416) then
-	mwse.log("[Perfect Placement] Build date of %s does not meet minimum build date of 20190416.", mwse.buildDate)
-	return
+    mwse.log("[Perfect Placement] Build date of %s does not meet minimum build date of 20190416.", mwse.buildDate)
+    return
 end
 
 local configId = "Perfect Placement"
 local config = mwse.loadConfig(configId)
 if (config == nil) then
-	config = {
+    config = {
         keybind = 34,
         keybindRotate = 42,
         keybindSnap = 54,
@@ -22,7 +22,7 @@ if (config == nil) then
         sensitivity = 15,
         showGuide = true,
         snapN = 1
-	}
+    }
 end
 
 local this = {
@@ -153,7 +153,7 @@ local function simulatePlacement(e)
     this.shadow_model.appCulled = true
     this.active.sceneNode.appCulled = true
     local ray = tes3.worldController.armCamera.cameraRoot.worldTransform.rotation * this.ray
-    local eye = tes3.player.position + tes3vector3.new(0, 0, 128)
+    local eye = tes3.getPlayerEyePosition()
     local rayhit = tes3.rayTest{ position = eye, direction = ray, maxDistance = 800 }
     
     -- Limit holding distance to a maxReach * initial distance.
@@ -271,25 +271,26 @@ local function setVerticalMode(n)
 end
 
 -- Match vertical mode from an orientation.
-local function matchVerticalMode(orient)
-    if (math.abs(orient.x) > 0.1) then
+local function matchVerticalMode(orient, boundMin, boundMax)
+    local absOriX = math.abs(orient.x)
+    if (absOriX > 1.55 and absOriX < 1.59) then
         local k = math.floor(0.5 + orient.z / (0.5 * math.pi))
         if (k == 0) then
             this.verticalMode = 1
-            this.height = -this.boundMin.y
+            this.height = -boundMin.y
         elseif (k == -1) then
             this.verticalMode = 2
-            this.height = -this.boundMin.x
+            this.height = -boundMin.x
         elseif (k == 2) then
             this.verticalMode = 3
-            this.height = this.boundMax.y
+            this.height = boundMax.y
         elseif (k == 1) then
             this.verticalMode = 4
-            this.height = this.boundMax.x
+            this.height = boundMax.x
         end
     else
         this.verticalMode = 0
-        this.height = -this.boundMin.z
+        this.height = -boundMin.z
     end
 end
 
@@ -297,7 +298,7 @@ end
 local function copyLastOri()
     if (this.lastItemOri) then
         this.orientation = this.lastItemOri:copy()
-        matchVerticalMode(this.orientation)
+        matchVerticalMode(this.orientation, this.boundMin, this.boundMax)
     end
 end
 
@@ -345,12 +346,27 @@ local function activatePlacement(e)
         -- Calculate effective bounds including scale.
         this.boundMin = target.object.boundingBox.min * target.scale
         this.boundMax = target.object.boundingBox.max * target.scale
-        matchVerticalMode(target.orientation)
+        matchVerticalMode(target.orientation, this.boundMin, this.boundMax)
 
         -- Get exact ray to selection point, relative to 1st person camera.
-        local eye = tes3.player.position + tes3vector3.new(0, 0, 128)
+        local eye = tes3.getPlayerEyePosition()
         local basePos = target.position - tes3vector3.new(0, 0, this.height)
+
+        -- Check if item is attached to a wall.
+        if (this.verticalMode > 0) then
+            local attachRay = tes3vector3.new(math.sin(target.orientation.y), math.cos(target.orientation.y), 0)
+            local attachPos = tes3vector3.new(basePos.x + -this.boundMin.z * attachRay.x, basePos.y + -this.boundMin.z * attachRay.y, basePos.z)
+            local rayhit = tes3.rayTest{ position = attachPos + attachRay * -0.5, direction = attachRay, maxDistance = 1, ignore = {target} }
+
+            if (rayhit and rayhit.distance < 1) then
+                -- Adjust basePos to be on the model edge that is touching the wall.
+                basePos = attachPos
+            end
+        end
+
         this.ray = tes3.worldController.armCamera.cameraRoot.worldTransform.rotation:transpose() * (basePos - eye)
+
+        -- Save initial placement.
         this.playerLastOri = tes3.player.orientation:copy()
         this.itemInitialPos = target.position:copy()
         this.itemInitialOri = target.orientation:copy()
@@ -476,7 +492,7 @@ modConfig.config = config
 modConfig.onKeybindUpdate = keybindUpdate
 
 local function registerModConfig()
-	mwse.registerModConfig("Perfect Placement", modConfig)
+    mwse.registerModConfig("Perfect Placement", modConfig)
 end
 
 event.register("modConfigReady", registerModConfig)
