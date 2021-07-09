@@ -304,7 +304,7 @@ end
 local function activatePlacement(e)
     local target = tes3.getPlayerTarget()
 
-    -- Do not active in menu mode and during attacking/casting.
+    -- Do not operate in menu mode and during attacking/casting.
     if (tes3.menuMode() or tes3.mobilePlayer.actionData.animationAttackState > 1) then
         return
     end
@@ -470,6 +470,7 @@ event.register("initialized", onInitialized)
 -- ModConfig
 
 local modConfig = require("hrnchamd.perfectplacement.mcm")
+modConfig.configId = configId
 modConfig.config = config
 modConfig.onKeybindUpdate = keybindUpdate
 

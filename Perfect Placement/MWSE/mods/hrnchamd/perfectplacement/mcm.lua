@@ -1,4 +1,3 @@
-local configId = "Perfect Placement"
 local this = {}
 
 local textOnOff = { [false] = "Off", [true] = "On" }
@@ -6,7 +5,7 @@ local textOnOff = { [false] = "Off", [true] = "On" }
 local function createConfigSliderPackage(params)
 	local horizontalBlock = params.parent:createBlock({})
 	horizontalBlock.flowDirection = "left_to_right"
-	horizontalBlock.layoutWidthFraction = 1.0
+	horizontalBlock.widthProportional = 1.0
 	horizontalBlock.height = 24
     horizontalBlock.borderBottom = 24
 
@@ -107,7 +106,7 @@ end
 
 function createKeybind(parent, label, configKey)
     local block = parent:createBlock{}
-    block.layoutWidthFraction = 1.0
+    block.widthProportional = 1.0
     block.autoHeight = true
     block.borderBottom = 16
     local keybindLabel = block:createLabel{ text = label }
@@ -119,8 +118,8 @@ end
 
 function this.onCreate(parent)
 	local pane = parent:createThinBorder{}
-	pane.layoutWidthFraction = 1.0
-	pane.layoutHeightFraction = 1.0
+	pane.widthProportional = 1.0
+	pane.heightProportional = 1.0
 	pane.paddingAllSides = 12
     pane.flowDirection = "top_to_bottom"
     this.pane = pane
@@ -140,7 +139,7 @@ function this.onCreate(parent)
     summary.borderBottom = 40
 
     local optionGuide = pane:createBlock{}
-    optionGuide.layoutWidthFraction = 1.0
+    optionGuide.widthProportional = 1.0
     optionGuide.autoHeight = true
     optionGuide.borderBottom = 24
     local optionGuideLabel = optionGuide:createLabel{ text = "Display keybind guide" }
@@ -160,7 +159,7 @@ function this.onCreate(parent)
 	})
 	
     local optionSnap = pane:createBlock{}
-    optionSnap.layoutWidthFraction = 1.0
+    optionSnap.widthProportional = 1.0
     optionSnap.autoHeight = true
     optionSnap.borderBottom = 24
     local optionSnapLabel = optionSnap:createLabel{ text = "Snap rotation mode to nearest" }
@@ -191,7 +190,7 @@ function this.onClose(container)
         event.unregister("keyDown", keybindDown)
     end
     
-	mwse.saveConfig(configId, this.config)
+	mwse.saveConfig(this.configId, this.config)
 end
 
 return this
