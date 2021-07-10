@@ -10,6 +10,8 @@ if (mwse.buildDate == nil or mwse.buildDate < 20190416) then
     return
 end
 
+local orientModule = require("hrnchamd.perfectplacement.orient")
+
 local configId = "Perfect Placement"
 local config = mwse.loadConfig(configId)
 if (config == nil) then
@@ -31,6 +33,7 @@ local this = {
     rotateMode = false,
     snapMode = false,
     verticalMode = 0,
+    groundAlignMode = true,
     wallAlignMode = true
 }
 
@@ -102,8 +105,8 @@ local function showGuide()
     addLine("Rotate item", "Hold ", config.keybindRotate)
     addLine("Vertical mode cycle", "", config.keybindVertical)
     addLine("Match last placed item", "Hold ", config.keybindVertical)
+    addLine("Snap to surface toggle", "", config.keybindWallAlign)
     addLine("Snap rotation toggle", "", config.keybindSnap)
-    addLine("Snap to vertical surface toggle", "", config.keybindWallAlign)
     addLine("Drop item", "", config.keybind)
 
     menu:updateLayout()
@@ -118,11 +121,15 @@ local function finalPlacement()
         -- Drop to ground.
         this.active.sceneNode.appCulled = true
         local from = this.active.position + tes3vector3.new(0, 0, -this.height + const_epsilon)
-        local rayhit = tes3.rayTest{ position = from, direction = tes3vector3.new(0, 0, -1) }
+        local rayhit = tes3.rayTest{ position = from, direction = tes3vector3.new(0, 0, -1), returnNormal = true }
         this.active.sceneNode.appCulled = false
 
         if (rayhit) then
             this.active.position = rayhit.intersection + tes3vector3.new(0, 0, this.height + const_epsilon)
+
+            if (this.verticalMode == 0 and this.groundAlignMode) then
+                orientModule.orientRef(this.active, rayhit)
+            end
         end
     end
     
@@ -154,7 +161,7 @@ local function simulatePlacement(e)
     this.active.sceneNode.appCulled = true
     local ray = tes3.worldController.armCamera.cameraRoot.worldTransform.rotation * this.ray
     local eye = tes3.getPlayerEyePosition()
-    local rayhit = tes3.rayTest{ position = eye, direction = ray, maxDistance = 800 }
+    local rayhit = tes3.rayTest{ position = eye, direction = ray, maxDistance = 800, returnNormal = true }
     
     -- Limit holding distance to a maxReach * initial distance.
     local pos
@@ -166,10 +173,20 @@ local function simulatePlacement(e)
     -- Add epsilon to ensure the intersection is not inside the model during to floating point precision.
     pos.z = pos.z + const_epsilon
 
-    -- Vertical mode handling.
+    -- Item orientation handling.
     this.wallMount = false
-    if (this.verticalMode > 0) then
-        -- Check if the bottom of the model is close to other geometry.
+    if (this.verticalMode == 0) then
+        -- Ground mode. Check if item is directly touching something.
+        if (rayhit and rayhit.distance <= this.maxReach and this.groundAlignMode) then
+            -- Orient item to match placement.
+            this.orientation = orientModule.orientRef(this.active, rayhit)
+        elseif (not this.groundAlignMode) then
+            -- Remove any tilt rotation.
+            this.orientation.x = 0
+            this.orientation.y = 0
+        end
+    else
+        -- Vertical mode. Check if the bottom of the model is close to other geometry.
         local clearance = math.max(2, -this.boundMin.z)
         ray = tes3vector3.new(clearance * math.sin(this.orientation.y), clearance * math.cos(this.orientation.y), 0)
         rayhit = tes3.rayTest{ position = pos + ray * -const_epsilon, direction = ray, maxDistance = 2, returnNormal = true }
@@ -403,11 +420,12 @@ endPlacement = function()
     event.unregister("cellChanged", cellChanged)
     tes3ui.suppressTooltip(false)
     
+    -- this.snapMode is persistent
+    -- this.groundAlignMode is persistent
+    -- this.wallAlignMode is persistent
     this.active = nil
     this.rotateMode = nil
-    -- this.snapMode is persistent
     this.verticalMode = 0
-    -- this.wallAlignMode is persistent
     this.shadow_model.appCulled = true
     tes3.mobilePlayer.mouseLookDisabled = false
     
@@ -446,7 +464,11 @@ local function modeKeyDown(e)
                 this.verticalMode = 0
             end
         elseif (e.keyCode == config.keybindWallAlign) then
-            this.wallAlignMode = not this.wallAlignMode
+            if (this.verticalMode == 0) then
+                this.groundAlignMode = not this.groundAlignMode
+            else
+                this.wallAlignMode = not this.wallAlignMode
+            end
         end
     end
 end
