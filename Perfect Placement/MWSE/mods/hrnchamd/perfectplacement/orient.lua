@@ -1,7 +1,8 @@
 --[[
     Ground orientation functions
+
     Source: Just Drop It by Merlord
-    Used with permission
+    Used with permission.
 ]]--
 
 local this = {}

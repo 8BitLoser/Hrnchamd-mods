@@ -180,10 +180,17 @@ local function simulatePlacement(e)
         if (rayhit and rayhit.distance <= this.maxReach and this.groundAlign) then
             -- Orient item to match placement.
             this.orientation = orientModule.orientRef(this.active, rayhit)
-        elseif (not this.groundAlign) then
-            -- Remove any tilt rotation.
-            this.orientation.x = 0
-            this.orientation.y = 0
+        else
+            -- Remove any tilt rotation, in an animated manner.
+            local ease = math.max(0.5, 1 - 20 * e.delta)
+            this.orientation.x = ease * this.orientation.x
+            this.orientation.y = ease * this.orientation.y
+            if (math.abs(this.orientation.x) < 0.02) then
+                this.orientation.x = 0
+            end
+            if (math.abs(this.orientation.y) < 0.02) then
+                this.orientation.y = 0
+            end
         end
     else
         -- Vertical mode. Check if the bottom of the model is close to other geometry.
