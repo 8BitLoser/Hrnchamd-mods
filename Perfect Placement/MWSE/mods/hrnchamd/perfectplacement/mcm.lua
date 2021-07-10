@@ -3,37 +3,37 @@ local this = {}
 local textOnOff = { [false] = "Off", [true] = "On" }
 
 local function createConfigSliderPackage(params)
-	local horizontalBlock = params.parent:createBlock({})
-	horizontalBlock.flowDirection = "left_to_right"
-	horizontalBlock.widthProportional = 1.0
-	horizontalBlock.height = 24
+    local horizontalBlock = params.parent:createBlock({})
+    horizontalBlock.flowDirection = "left_to_right"
+    horizontalBlock.widthProportional = 1.0
+    horizontalBlock.height = 24
     horizontalBlock.borderBottom = 24
 
-	local label = horizontalBlock:createLabel({ text = params.label })
+    local label = horizontalBlock:createLabel({ text = params.label })
     label.absolutePosAlignY = 0.5
     label.minWidth = 300
 
-	local key = params.key
-	local value = this.config[key] or params.default or 0
-	
-	local sliderLabel = horizontalBlock:createLabel({ text = tostring(value) })
+    local key = params.key
+    local value = this.config[key] or params.default or 0
+    
+    local sliderLabel = horizontalBlock:createLabel({ text = tostring(value) })
     sliderLabel.absolutePosAlignY = 0.5
     sliderLabel.minWidth = 30
 
-	local range = params.max - params.min
+    local range = params.max - params.min
 
-	local slider = horizontalBlock:createSlider({ current = value - params.min, max = range, step = params.step, jump = params.jump })
+    local slider = horizontalBlock:createSlider({ current = value - params.min, max = range, step = params.step, jump = params.jump })
     slider.absolutePosAlignY = 0.7
-	slider.width = 300
-	slider:register("PartScrollBar_changed", function(e)
-		this.config[key] = slider:getPropertyInt("PartScrollBar_current") + params.min
-		sliderLabel.text = this.config[key]
-		if (params.onUpdate) then
-			params.onUpdate(e)
-		end
-	end)
+    slider.width = 300
+    slider:register("PartScrollBar_changed", function(e)
+        this.config[key] = slider:getPropertyInt("PartScrollBar_current") + params.min
+        sliderLabel.text = this.config[key]
+        if (params.onUpdate) then
+            params.onUpdate(e)
+        end
+    end)
 
-	return { block = horizontalBlock, label = label, sliderLabel = sliderLabel, slider = slider }
+    return { block = horizontalBlock, label = label, sliderLabel = sliderLabel, slider = slider }
 end
 
 function onOffOption(e)
@@ -117,10 +117,10 @@ function createKeybind(parent, label, configKey)
 end
 
 function this.onCreate(parent)
-	local pane = parent:createThinBorder{}
-	pane.widthProportional = 1.0
-	pane.heightProportional = 1.0
-	pane.paddingAllSides = 12
+    local pane = parent:createThinBorder{}
+    pane.widthProportional = 1.0
+    pane.heightProportional = 1.0
+    pane.paddingAllSides = 12
     pane.flowDirection = "top_to_bottom"
     this.pane = pane
 
@@ -148,16 +148,16 @@ function this.onCreate(parent)
     local optionGuideButton = optionGuide:createButton{ text = textOnOff[this.config.showGuide] }
     optionGuideButton:register("mouseClick", onOffOption)
 
-	createConfigSliderPackage({
-		parent = pane,
-		label = "Rotate mode sensitivity",
-		key = "sensitivity",
-		min = 5,
-		max = 50,
-		step = 1,
-		jump = 2
-	})
-	
+    createConfigSliderPackage({
+        parent = pane,
+        label = "Rotate mode sensitivity",
+        key = "sensitivity",
+        min = 5,
+        max = 50,
+        step = 1,
+        jump = 2
+    })
+    
     local optionSnap = pane:createBlock{}
     optionSnap.widthProportional = 1.0
     optionSnap.autoHeight = true
@@ -190,7 +190,7 @@ function this.onClose(container)
         event.unregister("keyDown", keybindDown)
     end
     
-	mwse.saveConfig(this.configId, this.config)
+    mwse.saveConfig(this.configId, this.config)
 end
 
 return this
