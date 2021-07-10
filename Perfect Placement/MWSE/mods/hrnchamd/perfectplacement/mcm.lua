@@ -1,13 +1,14 @@
 local this = {}
 
 local textOnOff = { [false] = "Off", [true] = "On" }
+local configSpacing = 17
 
 local function createConfigSliderPackage(params)
     local horizontalBlock = params.parent:createBlock({})
     horizontalBlock.flowDirection = "left_to_right"
     horizontalBlock.widthProportional = 1.0
-    horizontalBlock.height = 24
-    horizontalBlock.borderBottom = 24
+    horizontalBlock.height = 30
+    horizontalBlock.borderBottom = configSpacing
 
     local label = horizontalBlock:createLabel({ text = params.label })
     label.absolutePosAlignY = 0.5
@@ -23,7 +24,7 @@ local function createConfigSliderPackage(params)
     local range = params.max - params.min
 
     local slider = horizontalBlock:createSlider({ current = value - params.min, max = range, step = params.step, jump = params.jump })
-    slider.absolutePosAlignY = 0.7
+    slider.absolutePosAlignY = 0.5
     slider.width = 300
     slider:register("PartScrollBar_changed", function(e)
         this.config[key] = slider:getPropertyInt("PartScrollBar_current") + params.min
@@ -36,12 +37,25 @@ local function createConfigSliderPackage(params)
     return { block = horizontalBlock, label = label, sliderLabel = sliderLabel, slider = slider }
 end
 
-function onOffOption(e)
-    this.config.showGuide = not this.config.showGuide
-    e.source.text = textOnOff[this.config.showGuide]
-    this.pane:updateLayout()
+function createOnOffOption(params)
+    local block = params.parent:createBlock{}
+    block.widthProportional = 1.0
+    block.autoHeight = true
+    block.borderBottom = configSpacing
+
+    local label = block:createLabel{ text = params.label }
+    label.absolutePosAlignY = 0.5
+    label.minWidth = 300
+
+    local key = params.key
+    local button = block:createButton{ text = textOnOff[this.config[key]] }
+    button:register("mouseClick", function(e)
+        this.config[key] = not this.config[key]
+        e.source.text = textOnOff[this.config[key]]
+        e.source:getTopLevelMenu():updateLayout()
+    end)
 end
-    
+
 function snapOption(e, n)
     this.config.snapN = n
     
@@ -78,7 +92,7 @@ function keybindDown(e)
         if (e.keyCode ~= 1) then
             this.config[this.binder.configKey] = e.keyCode
             this.binder.button.text = getKeybindName(e.keyCode)
-            this.onKeybindUpdate()
+            this.onConfigUpdate()
         end
         this.binder.button.widget.state = 1
         this.binder = nil
@@ -138,17 +152,25 @@ function this.onCreate(parent)
     local summary = pane:createLabel{ text = "In first person view, use the [Grab / drop item] key on an item to manipulate it." }
     summary.borderBottom = 40
 
-    local optionGuide = pane:createBlock{}
-    optionGuide.widthProportional = 1.0
-    optionGuide.autoHeight = true
-    optionGuide.borderBottom = 24
-    local optionGuideLabel = optionGuide:createLabel{ text = "Display keybind guide" }
-    optionGuideLabel.absolutePosAlignY = 0.5
-    optionGuideLabel.minWidth = 300
-    local optionGuideButton = optionGuide:createButton{ text = textOnOff[this.config.showGuide] }
-    optionGuideButton:register("mouseClick", onOffOption)
+    createOnOffOption{
+        parent = pane,
+        label = "Display keybind guide",
+        key = "showGuide"
+    }
 
-    createConfigSliderPackage({
+    createOnOffOption{
+        parent = pane,
+        label = "Orient to ground by default",
+        key = "initialGroundAlign"
+    }
+
+    createOnOffOption{
+        parent = pane,
+        label = "Orient to walls by default",
+        key = "initialWallAlign"
+    }
+
+    createConfigSliderPackage{
         parent = pane,
         label = "Rotate mode sensitivity",
         key = "sensitivity",
@@ -156,18 +178,18 @@ function this.onCreate(parent)
         max = 50,
         step = 1,
         jump = 2
-    })
+    }
     
     local optionSnap = pane:createBlock{}
     optionSnap.widthProportional = 1.0
     optionSnap.autoHeight = true
-    optionSnap.borderBottom = 24
+    optionSnap.borderBottom = configSpacing
     local optionSnapLabel = optionSnap:createLabel{ text = "Snap rotation mode to nearest" }
     optionSnapLabel.absolutePosAlignY = 0.5
     optionSnapLabel.minWidth = 300
     local optionSnap2 = optionSnap:createBlock{}
     optionSnap2.autoWidth = true
-    optionSnap2.height = 30
+    optionSnap2.autoHeight = true
     
     this.snapButtons = {}
     createSnapOption(optionSnap2, 1, "90 deg")
@@ -178,8 +200,8 @@ function this.onCreate(parent)
     createKeybind(pane, "Grab / drop item", "keybind")
     createKeybind(pane, "Rotate item", "keybindRotate")
     createKeybind(pane, "Vertical mode cycle", "keybindVertical")
+    createKeybind(pane, "Orient to surface toggle", "keybindWallAlign")
     createKeybind(pane, "Snap rotation toggle", "keybindSnap")
-    createKeybind(pane, "Snap to vertical surface toggle", "keybindWallAlign")
 
     pane:updateLayout()
 end
@@ -191,6 +213,7 @@ function this.onClose(container)
     end
     
     mwse.saveConfig(this.configId, this.config)
+    this.onConfigUpdate()
 end
 
 return this

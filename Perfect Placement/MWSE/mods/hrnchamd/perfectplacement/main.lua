@@ -13,19 +13,19 @@ end
 local orientModule = require("hrnchamd.perfectplacement.orient")
 
 local configId = "Perfect Placement"
-local config = mwse.loadConfig(configId)
-if (config == nil) then
-    config = {
-        keybind = 34,
-        keybindRotate = 42,
-        keybindSnap = 54,
-        keybindVertical = 56,
-        keybindWallAlign = 53,
-        sensitivity = 15,
-        showGuide = true,
-        snapN = 1
-    }
-end
+local configDefault = {
+    keybind = 34,
+    keybindRotate = 42,
+    keybindSnap = 54,
+    keybindVertical = 56,
+    keybindWallAlign = 53,
+    sensitivity = 15,
+    showGuide = true,
+    initialGroundAlign = true,
+    initialWallAlign = true,
+    snapN = 1
+}
+local config = mwse.loadConfig(configId, configDefault)
 
 local this = {
     maxReach = 1.2,
@@ -33,8 +33,8 @@ local this = {
     rotateMode = false,
     snapMode = false,
     verticalMode = 0,
-    groundAlignMode = true,
-    wallAlignMode = true
+    groundAlign = config.initialGroundAlign,
+    wallAlign = config.initialWallAlign
 }
 
 local const_epsilon = 0.001
@@ -105,7 +105,7 @@ local function showGuide()
     addLine("Rotate item", "Hold ", config.keybindRotate)
     addLine("Vertical mode cycle", "", config.keybindVertical)
     addLine("Match last placed item", "Hold ", config.keybindVertical)
-    addLine("Snap to surface toggle", "", config.keybindWallAlign)
+    addLine("Orient to surface toggle", "", config.keybindWallAlign)
     addLine("Snap rotation toggle", "", config.keybindSnap)
     addLine("Drop item", "", config.keybind)
 
@@ -127,7 +127,7 @@ local function finalPlacement()
         if (rayhit) then
             this.active.position = rayhit.intersection + tes3vector3.new(0, 0, this.height + const_epsilon)
 
-            if (this.verticalMode == 0 and this.groundAlignMode) then
+            if (this.verticalMode == 0 and this.groundAlign) then
                 orientModule.orientRef(this.active, rayhit)
             end
         end
@@ -177,10 +177,10 @@ local function simulatePlacement(e)
     this.wallMount = false
     if (this.verticalMode == 0) then
         -- Ground mode. Check if item is directly touching something.
-        if (rayhit and rayhit.distance <= this.maxReach and this.groundAlignMode) then
+        if (rayhit and rayhit.distance <= this.maxReach and this.groundAlign) then
             -- Orient item to match placement.
             this.orientation = orientModule.orientRef(this.active, rayhit)
-        elseif (not this.groundAlignMode) then
+        elseif (not this.groundAlign) then
             -- Remove any tilt rotation.
             this.orientation.x = 0
             this.orientation.y = 0
@@ -194,7 +194,7 @@ local function simulatePlacement(e)
         if (rayhit and rayhit.distance < 1) then
             -- Place at minimum distance outside wall, and optionally align rotation with normal.
             pos = rayhit.intersection - ray
-            if (this.wallAlignMode and math.abs(rayhit.normal.z) < 0.2) then
+            if (this.wallAlign and math.abs(rayhit.normal.z) < 0.2) then
                 this.orientation.y = math.atan2(-rayhit.normal.x, -rayhit.normal.y)
             end
             this.wallMount = true
@@ -405,6 +405,7 @@ local function activatePlacement(e)
         
         if (config.showGuide) then
             showGuide()
+            tes3.messageBox(tostring(this.groundAlign))
         end
     end
 end
@@ -421,8 +422,8 @@ endPlacement = function()
     tes3ui.suppressTooltip(false)
     
     -- this.snapMode is persistent
-    -- this.groundAlignMode is persistent
-    -- this.wallAlignMode is persistent
+    -- this.groundAlign is persistent
+    -- this.wallAlign is persistent
     this.active = nil
     this.rotateMode = nil
     this.verticalMode = 0
@@ -465,9 +466,9 @@ local function modeKeyDown(e)
             end
         elseif (e.keyCode == config.keybindWallAlign) then
             if (this.verticalMode == 0) then
-                this.groundAlignMode = not this.groundAlignMode
+                this.groundAlign = not this.groundAlign
             else
-                this.wallAlignMode = not this.wallAlignMode
+                this.wallAlign = not this.wallAlign
             end
         end
     end
@@ -484,7 +485,12 @@ local function modeKeyUp(e)
     end
 end
 
-local function keybindUpdate()
+local function onConfigUpdate()
+    -- Update align mode
+    this.groundAlign = config.initialGroundAlign
+    this.wallAlign = config.initialWallAlign
+
+    -- Update keybinds
     local menu = tes3ui.findHelpLayerMenu(this.id_guide)
     if (menu) then
         menu:destroy()
@@ -511,7 +517,7 @@ event.register("initialized", onInitialized)
 local modConfig = require("hrnchamd.perfectplacement.mcm")
 modConfig.configId = configId
 modConfig.config = config
-modConfig.onKeybindUpdate = keybindUpdate
+modConfig.onConfigUpdate = onConfigUpdate
 
 local function registerModConfig()
     mwse.registerModConfig("Perfect Placement", modConfig)
