@@ -141,7 +141,7 @@ function this.onCreate(parent)
     local subhead1 = pane:createLabel{ text = "quis nostrum exercitationem ullam corporis suscipit laboriosam" }
     subhead1.font = 2
 
-    local header = pane:createLabel{ text = "Perfect Placement - from Sun's Reach Laboratorum\nversion 1.0" }
+    local header = pane:createLabel{ text = "Perfect Placement - from Sun's Reach Laboratorum\nversion 2.0" }
     header.color = tes3ui.getPalette("header_color")
     header.borderAllSides = 12
 

@@ -1,14 +1,8 @@
 --[[
     Mod: Perfect Placement
     Author: Hrnchamd
-    Version: 1.0
+    Version: 2.0
 ]]--
-
--- Version check
-if (mwse.buildDate == nil or mwse.buildDate < 20190416) then
-    mwse.log("[Perfect Placement] Build date of %s does not meet minimum build date of 20190416.", mwse.buildDate)
-    return
-end
 
 local orientModule = require("hrnchamd.perfectplacement.orient")
 
