@@ -117,7 +117,7 @@ local function finalPlacement()
     this.shadow_model.appCulled = true
     this.lastItemOri = this.active.orientation:copy()
 
-    if (not this.wallMount) then
+    if (not this.wallMount and not this.rotateMode) then
         -- Drop to ground.
         this.active.sceneNode.appCulled = true
         local from = this.active.position + tes3vector3.new(0, 0, -this.height + const_epsilon)
