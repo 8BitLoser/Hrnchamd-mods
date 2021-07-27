@@ -1175,7 +1175,8 @@ local function toggle(e)
         if (not menu) then
             createAdjuster()
             if (not tes3ui.menuMode()) then
-                tes3ui.enterMenuMode(menu)
+                -- Enter menu mode without regular menus appearing.
+                tes3ui.enterMenuMode(this.id_menu)
             end
         else
             this.menuX = menu.positionX
