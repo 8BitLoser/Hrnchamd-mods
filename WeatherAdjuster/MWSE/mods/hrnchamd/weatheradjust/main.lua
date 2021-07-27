@@ -11,15 +11,17 @@ weatherPatch.patchCloudVertexColours()
 local this = {}
 
 local configId = "Weather Adjuster"
-local config = mwse.loadConfig(configId)
-if (config == nil) then
-    config = {}
-    config.presets = {}
-    config.regions = {}
-else
-    -- Remove default, to be set from starting values later.
-    config.presets.default = nil
-end
+local configDefault = {
+    presets = {},
+    regions = {},
+    keybind = { keyCode = tes3.scanCode.F4, isShiftDown = true, isAltDown = false, isControlDown = false },
+    messageOnRegionChange = false,
+    disableSkyTextureChanges = false
+}
+
+local config = mwse.loadConfig(configId, configDefault)
+-- Remove default preset, to be set from starting values later.
+config.presets.default = nil
 
 local regionTransitionDuration = 20.0
 local weatherNames = { "Clear", "Cloudy", "Foggy", "Overcast", "Rain", "Thunderstorm", "Ashstorm", "Blight", "Snow", "Blizzard" }
@@ -1346,3 +1348,4 @@ mcm.configId = configId
 mcm.config = config
 event.register("modConfigReady", mcm.registerModConfig)
 event.register("initialized", init)
+mwse.log("[Weather Adjuster] Loaded successfully.")
