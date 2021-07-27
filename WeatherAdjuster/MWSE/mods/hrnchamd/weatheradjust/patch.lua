@@ -1,7 +1,7 @@
 --[[
     Mod: Weather Adjuster
     Author: Hrnchamd
-    Version: 1.0
+    Version: 2.0
 ]]--
 
 local this = {}

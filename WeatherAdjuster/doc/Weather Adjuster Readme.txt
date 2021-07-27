@@ -1,7 +1,7 @@
 
-Weather Adjuster 1.0
+Weather Adjuster 2.0
 ---------------------
-by Hrnchamd, released 2019-05-27
+by Hrnchamd, released 2021-07-27
 
 
 Summary
@@ -44,6 +44,8 @@ Use the Region tab to assign presets to regions. While Weather Adjuster is runni
 Compatibility
 -------------
 
+Some sky mods such as Watch the Skies will change sky textures. You can make it compatible by disabling texture changes in Weather Adjuster's MWSE Mod Config menu.
+
 This mod will collide with other mods that change weather on cell change. It mostly causes visual glitches during weather transitions or region transitions.
 
 Known compatibility problems:
@@ -57,3 +59,14 @@ Notes
 -----
 
 Morrowind has fully dynamic colours for all parts of the sky, driven by a few variables that are normally set in morrowind.ini. Weather Adjuster allows you to modify them. There is a less intuitive link; clouds are controlled by fog colour. Normally the game does not allow clouds to go all the way to black at night, only to 10% brightness, but this mod patches the game to allow darker clouds. The clouds will not look exactly the same without the mod active.
+
+
+Changes
+-------
+
+2.0
+- The weather adjuster window will appear without the regular inventory menus appearing.
+- Texture changes can be disabled for compatibility with other sky mods.
+- WeatherAdjuster.dll no longer required.
+- Region transitions are paused while in interiors.
+- Default keybind fixed to work on a fresh install without visiting settings first.
