@@ -104,6 +104,7 @@ local function presetToCurrentWeather(p)
         dest.b = src[3]
     end
     
+    local changeTextures = not config.disableSkyTextureChanges
     local wc = tes3.worldController.weatherController
     for i, w in ipairs(wc.weathers) do
         local x = p[weatherNames[i]]
@@ -124,7 +125,9 @@ local function presetToCurrentWeather(p)
         setWeatherRGB(w.sunSunsetColor, x.sunSunsetColor)
         setWeatherRGB(w.sunNightColor, x.sunNightColor)
         setWeatherRGB(w.sundiscSunsetColor, x.sundiscSunsetColor)
-        w.cloudTexture = x.cloudTexture or this.defaultClouds[i]
+        if (changeTextures) then
+            w.cloudTexture = x.cloudTexture or this.defaultClouds[i]
+        end
     end
 
     -- Weather switch required to load cloud texture, try to preserve transitions.
@@ -153,6 +156,7 @@ local function presetToTransitionWeather(p)
         dest.b = src[3]
     end
     
+    local changeTextures = not config.disableSkyTextureChanges
     local wc = tes3.worldController.weatherController
     for i, w in ipairs(wc.weathers) do
         local x = p[weatherNames[i]]
@@ -178,8 +182,10 @@ local function presetToTransitionWeather(p)
             setWeatherRGB(w.sundiscSunsetColor, x.sundiscSunsetColor)
         end
         -- Set all clouds except for transition target, or it will jump when starting the next transition.
-        if (w ~= wc.nextWeather or wc.transitionScalar <= 0.05) then
-            w.cloudTexture = x.cloudTexture or this.defaultClouds[i]
+        if (changeTextures) then
+            if (w ~= wc.nextWeather or wc.transitionScalar <= 0.05) then
+                w.cloudTexture = x.cloudTexture or this.defaultClouds[i]
+            end
         end
     end
 end
@@ -1268,17 +1274,19 @@ local function onCellChanged()
                 local currentWeatherOriginalClouds = wc.currentWeather.cloudTexture
                 switchPreset(pname, true)
 
-                -- Re-trigger transition to load textures, or set up a second transition to do it later.
-                if (wc.nextWeather) then
-                    local t = wc.transitionScalar
-                    if (t <= 0.05) then
-                        wc:switchTransition(wc.nextWeather.index)
-                        wc.transitionScalar = t
-                    else
-                        this.secondTransition = wc.nextWeather
+                if (not config.disableSkyTextureChanges) then
+                    -- Re-trigger transition to load textures, or set up a second transition to do it later.
+                    if (wc.nextWeather) then
+                        local t = wc.transitionScalar
+                        if (t <= 0.05) then
+                            wc:switchTransition(wc.nextWeather.index)
+                            wc.transitionScalar = t
+                        else
+                            this.secondTransition = wc.nextWeather
+                        end
+                    elseif (currentWeatherOriginalClouds ~= wc.currentWeather.cloudTexture) then
+                        wc:switchTransition(wc.currentWeather.index)
                     end
-                elseif (currentWeatherOriginalClouds ~= wc.currentWeather.cloudTexture) then
-                    wc:switchTransition(wc.currentWeather.index)
                 end
 
                 -- Begin interpolation.
