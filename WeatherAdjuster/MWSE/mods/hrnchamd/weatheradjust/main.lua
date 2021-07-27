@@ -1183,6 +1183,11 @@ end
 local regionTransitionK = 1 / math.max(1, regionTransitionDuration)
 
 local function customTransition(e)
+    -- Pause transition when inside.
+    if (not this.lastRegion) then
+        return
+    end
+    
     local wc = tes3.worldController.weatherController
     local dt = regionTransitionK * e.delta
 
