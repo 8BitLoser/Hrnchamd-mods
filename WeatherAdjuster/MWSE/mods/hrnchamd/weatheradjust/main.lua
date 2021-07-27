@@ -296,7 +296,7 @@ local function sRGBToLCh(sRGB)
         0.0193306 * linRGB[1] + 0.1191972 * linRGB[2] + 0.9503726 * linRGB[3]
     }
     
-    -- To L*ab D50.
+    -- To L*ab D65.
     xyz = { xyz[1] / 0.95047, xyz[2], xyz[3] / 1.08883 }
     for i = 1, 3 do
         if (xyz[i] > 0.008856) then
@@ -327,7 +327,7 @@ end
 
 -- Colour space conversions for picker. CIE LCh perceptual to unclamped sRGB.
 local function LChTosRGB(LCh)
-    -- LCh to L*ab D50.
+    -- LCh to L*ab D65.
     local Lab = {
         LCh[1],
         LCh[2] * math.cos(math.rad(LCh[3])),
@@ -475,6 +475,10 @@ local function createPickerAdv(params)
     picker:register("mouseDown", function(e)
         table.insert(this.undoStack, currentWeatherToPreset())
         this.redoStack = {}
+        tes3ui.captureMouseDrag(true)
+    end)
+    picker:register("mouseRelease", function(e)
+        tes3ui.captureMouseDrag(false)
     end)
     picker:register("mouseStillPressed", function(e)
         local propX = math.max(0, math.min(1, e.relativeX / picker.width))
@@ -495,7 +499,7 @@ local function createPickerAdv(params)
 	return { block = horizontalBlock, label = label, pickerLabel = pickerLabel, picker = picker }
 end
 
-function createRadioButtonPackage(params)
+local function createRadioButtonPackage(params)
     local buttons = {}
 
 	local horizontalBlock = params.parent:createBlock{ id = params.id }
@@ -840,12 +844,12 @@ local function createTabEditor()
     local colourBlock = page:createBlock{ id = this.id_colourBlock }
 	colourBlock.layoutWidthFraction = 1.0
     colourBlock.autoHeight = true
-    colourBlock.borderTop = 8
+    colourBlock.borderTop = 6
 	colourBlock.flowDirection = "top_to_bottom"
     
     local undoRedo = page:createBlock{}
     undoRedo.absolutePosAlignX = 0.96
-    undoRedo.absolutePosAlignY = 0.92
+    undoRedo.absolutePosAlignY = 0.93
     undoRedo.autoWidth = true
     undoRedo.autoHeight = true
     local undoButton = undoRedo:createButton{ text = "Undo" }
@@ -989,7 +993,7 @@ local function createTabPresets()
             renameInput.parent.visible = false
             tes3ui.acquireTextInput(nil)
 
-            if (oldName == newName) then
+            if (oldName == newName or newName == "") then
                 return
             end
             if (config[newName]) then
