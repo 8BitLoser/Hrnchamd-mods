@@ -5,7 +5,7 @@
 ]]--
 
 local mcm = require("hrnchamd.weatheradjust.mcm")
-local weatherPatch = require("hrnchamd.weatheradjust.WeatherPatch")
+local weatherPatch = require("hrnchamd.weatheradjust.patch")
 weatherPatch.patchCloudVertexColours()
 
 local this = {}
