@@ -131,6 +131,7 @@ local function createKeybind(parent, label, configKey)
 end
 
 function this.onCreate(parent)
+    local i18n = this.i18n
     local pane = parent:createThinBorder{}
     pane.widthProportional = 1.0
     pane.heightProportional = 1.0
@@ -141,7 +142,7 @@ function this.onCreate(parent)
     local subhead1 = pane:createLabel{ text = "quis nostrum exercitationem ullam corporis suscipit laboriosam" }
     subhead1.font = 2
 
-    local header = pane:createLabel{ text = "Perfect Placement - from Sun's Reach Laboratorum\nversion 2.0" }
+    local header = pane:createLabel{ text = i18n("ConfigTitle", { version = this.modVersion }) }
     header.color = tes3ui.getPalette("header_color")
     header.borderAllSides = 12
 
@@ -149,30 +150,30 @@ function this.onCreate(parent)
     subhead2.font = 2
     subhead2.borderBottom = 12
 
-    local summary = pane:createLabel{ text = "In first person view, use the [Grab / drop item] key on an item to manipulate it." }
+    local summary = pane:createLabel{ text = i18n("ConfigSummary") }
     summary.borderBottom = 40
 
     createOnOffOption{
         parent = pane,
-        label = "Display keybind guide",
+        label = i18n("ConfigDisplayGuide"),
         key = "showGuide"
     }
 
     createOnOffOption{
         parent = pane,
-        label = "Orient to ground by default",
+        label = i18n("ConfigOrientToGround"),
         key = "initialGroundAlign"
     }
 
     createOnOffOption{
         parent = pane,
-        label = "Orient to walls by default",
+        label = i18n("ConfigOrientToWalls"),
         key = "initialWallAlign"
     }
 
     createConfigSliderPackage{
         parent = pane,
-        label = "Rotate mode sensitivity",
+        label = i18n("ConfigRotateSensitivity"),
         key = "sensitivity",
         min = 5,
         max = 50,
@@ -184,7 +185,7 @@ function this.onCreate(parent)
     optionSnap.widthProportional = 1.0
     optionSnap.autoHeight = true
     optionSnap.borderBottom = configSpacing
-    local optionSnapLabel = optionSnap:createLabel{ text = "Snap rotation mode to nearest" }
+    local optionSnapLabel = optionSnap:createLabel{ text = i18n("ConfigSnapRotationTo") }
     optionSnapLabel.absolutePosAlignY = 0.5
     optionSnapLabel.minWidth = 300
     local optionSnap2 = optionSnap:createBlock{}
@@ -192,16 +193,16 @@ function this.onCreate(parent)
     optionSnap2.autoHeight = true
     
     this.snapButtons = {}
-    createSnapOption(optionSnap2, 1, "90 deg")
-    createSnapOption(optionSnap2, 2, "45 deg")
-    createSnapOption(optionSnap2, 3, "30 deg")
-    createSnapOption(optionSnap2, 4, "15 deg")
+    createSnapOption(optionSnap2, 1, i18n("ConfigSnapDegrees", { d = 90 }))
+    createSnapOption(optionSnap2, 2, i18n("ConfigSnapDegrees", { d = 45 }))
+    createSnapOption(optionSnap2, 3, i18n("ConfigSnapDegrees", { d = 30 }))
+    createSnapOption(optionSnap2, 4, i18n("ConfigSnapDegrees", { d = 15 }))
     
-    createKeybind(pane, "Grab / drop item", "keybind")
-    createKeybind(pane, "Rotate item", "keybindRotate")
-    createKeybind(pane, "Vertical mode cycle", "keybindVertical")
-    createKeybind(pane, "Orient to surface toggle", "keybindWallAlign")
-    createKeybind(pane, "Snap rotation toggle", "keybindSnap")
+    createKeybind(pane, i18n("GrabDropItem"), "keybind")
+    createKeybind(pane, i18n("RotateItem"), "keybindRotate")
+    createKeybind(pane, i18n("VerticalMode"), "keybindVertical")
+    createKeybind(pane, i18n("OrientToSurface"), "keybindWallAlign")
+    createKeybind(pane, i18n("SnapRotation"), "keybindSnap")
 
     pane:updateLayout()
 end

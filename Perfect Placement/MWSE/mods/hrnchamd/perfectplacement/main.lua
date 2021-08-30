@@ -5,6 +5,7 @@
 ]]--
 
 local orientModule = require("hrnchamd.perfectplacement.orient")
+local i18n = mwse.loadTranslations("hrnchamd.perfectplacement")
 
 local configId = "Perfect Placement"
 local configDefault = {
@@ -97,12 +98,12 @@ local function showGuide()
         bind.absolutePosAlignX = 1.0
     end
     
-    addLine("Rotate item", "Hold ", config.keybindRotate)
-    addLine("Vertical mode cycle", "", config.keybindVertical)
-    addLine("Match last placed item", "Hold ", config.keybindVertical)
-    addLine("Orient to surface toggle", "", config.keybindWallAlign)
-    addLine("Snap rotation toggle", "", config.keybindSnap)
-    addLine("Drop item", "", config.keybind)
+    addLine(i18n("RotateItem"), i18n("HoldPrefix"), config.keybindRotate)
+    addLine(i18n("VerticalMode"), "", config.keybindVertical)
+    addLine(i18n("MatchLast"), i18n("HoldPrefix"), config.keybindVertical)
+    addLine(i18n("OrientToSurface"), "", config.keybindWallAlign)
+    addLine(i18n("SnapRotation"), "", config.keybindSnap)
+    addLine(i18n("DropItem"), "", config.keybind)
 
     menu:updateLayout()
 end
@@ -191,7 +192,7 @@ local function simulatePlacement(e)
         return
     -- Check for glitches.
     elseif (this.active.sceneNode == nil) then
-        tes3.messageBox{ message = "Item location was lost. Placement reset."}
+        tes3.messageBox{ message = i18n("ItemLocationLost") }
         this.active.position = this.itemInitialPos
         this.active.orientation = this.itemInitialOri
         endPlacement()
@@ -316,7 +317,7 @@ end
 local function cellChanged(e)
     -- To avoid problems, reset item if moving in or out of an interior cell.
     if (this.active.cell.isInterior or e.cell.isInterior) then
-        tes3.messageBox{ message = "You cannot move items between cells. Placement reset."}
+        tes3.messageBox{ message = i18n("CannotMoveBetweenCells") }
         this.active.position = this.itemInitialPos
         this.active.orientation = this.itemInitialOri
         endPlacement()
@@ -356,13 +357,13 @@ local function activatePlacement(e)
             if (owner.objectType == tes3.objectType.faction and owner.playerJoined and owner.playerRank >= itemdata.requirement) then
                 -- Player has sufficient faction rank.
             else
-                tes3.messageBox{ message = "This item is owned by someone." }
+                tes3.messageBox{ message = i18n("OwnedItem") }
                 return
             end
         end
         -- Workaround to avoid dupe-on-load bug when moving non-persistent refs into another cell.
         if (target.sourceMod and not target.cell.isInterior) then
-            tes3.messageBox{ message = "You must pick up and drop this item first." }
+            tes3.messageBox{ message = i18n("MustPickUpDropItem") }
             return
         end
 
@@ -527,8 +528,10 @@ event.register("initialized", onInitialized)
 -- ModConfig
 
 local modConfig = require("hrnchamd.perfectplacement.mcm")
+modConfig.modVersion = "2.0"
 modConfig.configId = configId
 modConfig.config = config
+modConfig.i18n = i18n
 modConfig.onConfigUpdate = onConfigUpdate
 
 local function registerModConfig()
