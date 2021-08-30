@@ -50,7 +50,7 @@ local placeableTypes = {
     [tes3.objectType.weapon] = true,
 }
 
-local endPlacement
+local endPlacement -- local function
 
 local function wrapRadians(x)
     return x % (2 * math.pi)
@@ -106,12 +106,63 @@ local function showGuide()
     menu:updateLayout()
 end
 
+-- Set rotation frame and effective height for vertical modes.
+local function setVerticalMode(n)
+    local prevHeight = this.height
+    local orient = this.orientation
+    orient.x = -0.5 * math.pi
+    orient.y = tes3.player.orientation.z
+
+    if (n == 1) then
+        orient.z = 0
+        this.height = -this.boundMin.y
+    elseif (n == 2) then
+        orient.z = -0.5 * math.pi
+        this.height = -this.boundMin.x
+    elseif (n == 3) then
+        orient.z = math.pi
+        this.height = this.boundMax.y
+    elseif (n == 4) then
+        orient.z = 0.5 * math.pi
+        this.height = this.boundMax.x
+    end
+
+    this.active.position = this.active.position + tes3vector3.new(0, 0, this.height - prevHeight)
+end
+
+-- Match vertical mode from an orientation.
+local function matchVerticalMode(orient, boundMin, boundMax)
+    local absOriX = math.abs(orient.x)
+    if (absOriX > 1.55 and absOriX < 1.59) then
+        local k = math.floor(0.5 + orient.z / (0.5 * math.pi))
+        if (k == 0 or k == 4) then
+            this.verticalMode = 1
+            this.height = -boundMin.y
+        elseif (k == -1 or k == 3) then
+            this.verticalMode = 2
+            this.height = -boundMin.x
+        elseif (k == -2 or k == 2) then
+            this.verticalMode = 3
+            this.height = boundMax.y
+        elseif (k == -3 or k == 1) then
+            this.verticalMode = 4
+            this.height = boundMax.x
+        end
+    else
+        this.verticalMode = 0
+        this.height = -boundMin.z
+    end
+end
+
 -- Called to confirm final placement, drops item to ground if not attaching to wall.
 local function finalPlacement()
     this.shadow_model.appCulled = true
     this.lastItemOri = this.active.orientation:copy()
 
     if (not this.wallMount and not this.rotateMode) then
+        -- Match vertical mode to get correct object height after arbitrary rotations.
+        matchVerticalMode(this.orientation, this.boundMin, this.boundMax)
+
         -- Drop to ground.
         this.active.sceneNode.appCulled = true
         local from = this.active.position + tes3vector3.new(0, 0, -this.height + const_epsilon)
@@ -222,8 +273,13 @@ local function simulatePlacement(e)
 
     -- Apply rotation.
     if (this.verticalMode == 0) then
+        -- Ground plane rotation.
+        this.orientation.z = wrapRadians(this.orientation.z + d_theta)
+    elseif (this.wallMount and this.rotateMode) then
+        -- Wall mount rotation.
         this.orientation.z = wrapRadians(this.orientation.z + d_theta)
     else
+        -- Vertical rotation.
         this.orientation.y = wrapRadians(this.orientation.y + d_theta)
     end
 
@@ -231,7 +287,7 @@ local function simulatePlacement(e)
     local orient = this.orientation:copy()
     if (this.snapMode) then
         local quantizer = (0.5 / config.snapN) * math.pi
-        if (this.verticalMode == 0) then
+        if (this.verticalMode == 0 or this.wallAlign) then
             orient.z = quantizer * math.floor(0.5 + orient.z / quantizer)
         else
             orient.y = quantizer * math.floor(0.5 + orient.y / quantizer)
@@ -261,54 +317,6 @@ local function cellChanged(e)
         this.active.position = this.itemInitialPos
         this.active.orientation = this.itemInitialOri
         endPlacement()
-    end
-end
-
--- Set rotation frame and effective height for vertical modes.
-local function setVerticalMode(n)
-    local prevHeight = this.height
-    local orient = this.orientation
-    orient.x = -0.5 * math.pi
-    orient.y = tes3.player.orientation.z
-    
-    if (n == 1) then
-        orient.z = 0
-        this.height = -this.boundMin.y
-    elseif (n == 2) then
-        orient.z = -0.5 * math.pi
-        this.height = -this.boundMin.x
-    elseif (n == 3) then
-        orient.z = math.pi
-        this.height = this.boundMax.y
-    elseif (n == 4) then
-        orient.z = 0.5 * math.pi
-        this.height = this.boundMax.x
-    end
-    
-    this.active.position = this.active.position + tes3vector3.new(0, 0, this.height - prevHeight)
-end
-
--- Match vertical mode from an orientation.
-local function matchVerticalMode(orient, boundMin, boundMax)
-    local absOriX = math.abs(orient.x)
-    if (absOriX > 1.55 and absOriX < 1.59) then
-        local k = math.floor(0.5 + orient.z / (0.5 * math.pi))
-        if (k == 0) then
-            this.verticalMode = 1
-            this.height = -boundMin.y
-        elseif (k == -1) then
-            this.verticalMode = 2
-            this.height = -boundMin.x
-        elseif (k == 2) then
-            this.verticalMode = 3
-            this.height = boundMax.y
-        elseif (k == 1) then
-            this.verticalMode = 4
-            this.height = boundMax.x
-        end
-    else
-        this.verticalMode = 0
-        this.height = -boundMin.z
     end
 end
 
@@ -371,7 +379,7 @@ local function activatePlacement(e)
         local basePos = target.position - tes3vector3.new(0, 0, this.height)
 
         -- Check if item is attached to a wall.
-        if (this.verticalMode > 0) then
+        if (this.verticalMode ~= 0) then
             local attachRay = tes3vector3.new(math.sin(target.orientation.y), math.cos(target.orientation.y), 0)
             local attachPos = tes3vector3.new(basePos.x + -this.boundMin.z * attachRay.x, basePos.y + -this.boundMin.z * attachRay.y, basePos.z)
             local rayhit = tes3.rayTest{ position = attachPos + attachRay * -0.5, direction = attachRay, maxDistance = 1, ignore = {target} }
@@ -455,9 +463,8 @@ local function modeKeyDown(e)
         elseif (e.keyCode == config.keybindVertical) then
             this.matchTimer = timer.start({ duration = this.holdKeyTime, callback = copyLastOri })            
 
-            this.verticalMode = this.verticalMode + 1
-
-            if (this.verticalMode <= 4) then
+            if (this.verticalMode == 0) then
+                this.verticalMode = 1
                 setVerticalMode(this.verticalMode)
             else
                 this.orientation = tes3.player.orientation:copy()
