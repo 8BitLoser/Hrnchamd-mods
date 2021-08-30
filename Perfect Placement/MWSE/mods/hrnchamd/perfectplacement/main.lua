@@ -1,7 +1,7 @@
 --[[
     Mod: Perfect Placement
     Author: Hrnchamd
-    Version: 2.0
+    Version: 2.1
 ]]--
 
 local orientModule = require("hrnchamd.perfectplacement.orient")
@@ -528,7 +528,7 @@ event.register("initialized", onInitialized)
 -- ModConfig
 
 local modConfig = require("hrnchamd.perfectplacement.mcm")
-modConfig.modVersion = "2.0"
+modConfig.modVersion = "2.1"
 modConfig.configId = configId
 modConfig.config = config
 modConfig.i18n = i18n
