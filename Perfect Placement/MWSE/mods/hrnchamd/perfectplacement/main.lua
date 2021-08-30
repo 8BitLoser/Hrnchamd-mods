@@ -406,7 +406,6 @@ local function activatePlacement(e)
         
         if (config.showGuide) then
             showGuide()
-            tes3.messageBox(tostring(this.groundAlign))
         end
     end
 end
