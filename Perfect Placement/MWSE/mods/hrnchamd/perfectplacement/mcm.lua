@@ -37,7 +37,7 @@ local function createConfigSliderPackage(params)
     return { block = horizontalBlock, label = label, sliderLabel = sliderLabel, slider = slider }
 end
 
-function createOnOffOption(params)
+local function createOnOffOption(params)
     local block = params.parent:createBlock{}
     block.widthProportional = 1.0
     block.autoHeight = true
@@ -56,7 +56,7 @@ function createOnOffOption(params)
     end)
 end
 
-function snapOption(e, n)
+local function snapOption(e, n)
     this.config.snapN = n
     
     for i, button in ipairs(this.snapButtons) do
@@ -72,7 +72,7 @@ function snapOption(e, n)
     this.pane:updateLayout()
 end
 
-function createSnapOption(parent, n, label)
+local function createSnapOption(parent, n, label)
     local button = parent:createButton{ text = label }
     button:register("mouseClick", function(e) snapOption(e, n) end)
     if (n == this.config.snapN) then
@@ -86,7 +86,7 @@ local function getKeybindName(scancode)
     return tes3.findGMST(tes3.gmst.sKeyName_00 + scancode).value
 end
 
-function keybindDown(e)
+local function keybindDown(e)
     if (this.binder) then
         -- If keycode not ESC
         if (e.keyCode ~= 1) then
@@ -102,7 +102,7 @@ function keybindDown(e)
     event.unregister("keyDown", keybindDown)
 end
 
-function keybindClick(e, configKey)
+local function keybindClick(e, configKey)
     local alreadyRegistered = false
     if (this.binder) then
         this.binder.button.widget.state = 1
@@ -118,7 +118,7 @@ function keybindClick(e, configKey)
     end
 end
 
-function createKeybind(parent, label, configKey)
+local function createKeybind(parent, label, configKey)
     local block = parent:createBlock{}
     block.widthProportional = 1.0
     block.autoHeight = true
