@@ -27,6 +27,7 @@ local this = {
     rotateMode = false,
     snapMode = false,
     verticalMode = 0,
+    freezeAlign = false,
     groundAlign = config.initialGroundAlign,
     wallAlign = config.initialWallAlign
 }
@@ -172,7 +173,7 @@ local function finalPlacement()
         if (rayhit) then
             this.active.position = rayhit.intersection + tes3vector3.new(0, 0, this.height + const_epsilon)
 
-            if (this.verticalMode == 0 and this.groundAlign) then
+            if (this.verticalMode == 0 and this.groundAlign and not this.freezeAlign) then
                 orientModule.orientRef(this.active, rayhit)
             end
         end
@@ -221,20 +222,22 @@ local function simulatePlacement(e)
     -- Item orientation handling.
     this.wallMount = false
     if (this.verticalMode == 0) then
-        -- Ground mode. Check if item is directly touching something.
-        if (rayhit and rayhit.distance <= this.maxReach and this.groundAlign) then
-            -- Orient item to match placement.
-            this.orientation = orientModule.orientRef(this.active, rayhit)
-        else
-            -- Remove any tilt rotation, in an animated manner.
-            local ease = math.max(0.5, 1 - 20 * e.delta)
-            this.orientation.x = ease * this.orientation.x
-            this.orientation.y = ease * this.orientation.y
-            if (math.abs(this.orientation.x) < 0.02) then
-                this.orientation.x = 0
-            end
-            if (math.abs(this.orientation.y) < 0.02) then
-                this.orientation.y = 0
+        if (not this.freezeAlign) then
+            -- Ground mode. Check if item is directly touching something.
+            if (rayhit and rayhit.distance <= this.maxReach and this.groundAlign) then
+                -- Orient item to match placement.
+                this.orientation = orientModule.orientRef(this.active, rayhit)
+            else
+                -- Remove any tilt rotation, in an animated manner.
+                local ease = math.max(0.5, 1 - 20 * e.delta)
+                this.orientation.x = ease * this.orientation.x
+                this.orientation.y = ease * this.orientation.y
+                if (math.abs(this.orientation.x) < 0.02) then
+                    this.orientation.x = 0
+                end
+                if (math.abs(this.orientation.y) < 0.02) then
+                    this.orientation.y = 0
+                end
             end
         end
     else
@@ -324,6 +327,7 @@ end
 local function copyLastOri()
     if (this.lastItemOri) then
         this.orientation = this.lastItemOri:copy()
+        this.freezeAlign = true
         matchVerticalMode(this.orientation, this.boundMin, this.boundMax)
     end
 end
@@ -397,6 +401,7 @@ local function activatePlacement(e)
         this.itemInitialPos = target.position:copy()
         this.itemInitialOri = target.orientation:copy()
         this.orientation = target.orientation:copy()
+        this.freezeAlign = false
 
         this.active = target
         tes3.playItemPickupSound{ item = target.object }
