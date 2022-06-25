@@ -377,7 +377,8 @@ local function toggleCollapser(e)
 end
 
 local function showContents(e)
-    local uid = e.widget:getPropertyInt("Hrn:Inspector.uid")
+	local widget = e.source.parent.parent
+    local uid = widget:getPropertyInt("Hrn:Inspector.uid")
     local element = this.elementMap[uid]
     local id_content = nil
 
@@ -426,7 +427,7 @@ local function showContents(e)
         return status
     end
     
-    recursiveShow(e.widget)
+    recursiveShow(widget)
     
     local menu = tes3ui.findMenu(this.id_menu)
     local scrollPaneWidget = menu:findChild(this.id_list).widget
@@ -455,17 +456,20 @@ local function refreshList()
             block.flowDirection = "top_to_bottom"
 
             local topline = block:createBlock{}
-            local collapser
             topline.widthProportional = 1.0
             topline.autoHeight = true
+
+            local collapser = topline:createBlock{}
+			collapser.autoWidth = true
+			collapser.autoHeight = true
             if (#child.children > 0) then
-                collapser = topline:createLabel{ id = this.id_subtoggle, text = "+" }
-                collapser.minWidth = 15
+                local toggleLabel = collapser:createLabel{ id = this.id_subtoggle, text = "+" }
+                toggleLabel.minWidth = 15
             else
                 topline.paddingLeft = 15
             end
 
-            local elementContentType = topline:createLabel{ text = string.format("[%s]", contentTypeAbbreviation[child.contentType]) }
+            local elementContentType = collapser:createLabel{ text = string.format("[%s]", contentTypeAbbreviation[child.contentType]) }
             elementContentType.color = { 0.5, 0.5, 0.45 }
             elementContentType.minWidth = 42
 
@@ -487,7 +491,7 @@ local function refreshList()
             if (#child.children >= 1) then
                 local firstid = child.children[1].id
                 if (firstid == this.id_dragFirstChild or firstid == this.id_fixedFirstChild or firstid == this.id_scrollFirstChild) then
-                    local contents = topline:createLabel{ text = "Contents >" }
+                    local contents = topline:createTextSelect{ text = "> Contents >" }
                     contents.borderLeft = 30
                     contents:register("mouseClick", showContents)
                 end
@@ -510,7 +514,7 @@ local function refreshList()
             end
 
             elementSelect:register("mouseClick", updateDetail)
-            if (collapser) then
+            if (#child.children > 0) then
                 collapser:register("mouseClick", toggleCollapser)
             end
         end
