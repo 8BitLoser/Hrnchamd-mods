@@ -1,7 +1,7 @@
 
-UI Inspector 1.4
+UI Inspector 1.5
 ---------------------
-by Hrnchamd, released 2021-06-21
+by Hrnchamd, released 2022-06-24
 
 
 Summary
@@ -37,6 +37,12 @@ In the bottom pane, layout properties can be adjusted with the buttons to the ri
 
 Changelog
 ---------
+
+1.5
+
+- Attributes can be copied to the clipboard by clicking on the value text. The copied string is formatted as "attr = value".
+- Tree view items can additionally be opened/collapsed by clicking on the item content type as well as the +/-.
+- The jump-to-content option for containers now highlights and behaves like clickable text, instead of static text.
 
 1.4
 
