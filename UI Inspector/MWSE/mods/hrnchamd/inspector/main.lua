@@ -146,6 +146,11 @@ local function changeAttrNumeric(element, attribute, delta)
     updateDetailValues(element)
 end
 
+local function copyDataTooltip(e)
+	local menu = tes3ui.createTooltipMenu()
+	menu:createLabel{ text = "Click to copy to clipboard." }
+end
+
 local function updateDetail(e)
     local menu = tes3ui.findMenu(this.id_menu)
     local pane = menu:findChild(this.id_detail):findChild(this.id_pane)
@@ -171,6 +176,7 @@ local function updateDetail(e)
 
     local function addDetail(attribute, editClass, defaultValue)
         local value = element[attribute]
+		local quoteValue = true
 
         local t = labels:createLabel{ text = attribute }
         t.absolutePosAlignX = 1.0
@@ -179,9 +185,10 @@ local function updateDetail(e)
         valueBlock.autoHeight = true
         local v = valueBlock:createLabel{ id = this.id_valueText, text = formatValue(value) }
         v.minWidth = 160
-        
+
         local b = nil
         if (editClass == "int") then
+			quoteValue = false
             b = valueBlock:createLabel{ text = "<- " }
             b.borderRight = 5
             b:register("mouseClick", function () changeAttrNumeric(element, attribute, -10) end)
@@ -198,6 +205,7 @@ local function updateDetail(e)
             b.borderLeft = 15
             b:register("mouseClick", function () changeAttrTo(element, attribute, nil) end)
         elseif (editClass == "float") then
+			quoteValue = false
             b = valueBlock:createLabel{ text = "<- " }
             b.borderRight = 5
             b:register("mouseClick", function () changeAttrNumeric(element, attribute, -0.1) end)
@@ -214,6 +222,7 @@ local function updateDetail(e)
             b.borderLeft = 15
             b:register("mouseClick", function () changeAttrTo(element, attribute, nil) end)
         elseif (editClass == "bool") then
+			quoteValue = false
             b = valueBlock:createLabel{ text = "false" }
             b.borderRight = 5
             b:register("mouseClick", function () changeAttrTo(element, attribute, false) end)
@@ -230,6 +239,13 @@ local function updateDetail(e)
                 b:register("mouseClick", function () changeAttrTo(element, attribute, k) end)
             end
         end
+
+		local copyFmt = quoteValue and "%s = \"%s\"" or "%s = %s"
+        v:register("mouseClick", function (e)
+			os.setClipboardText(string.format(copyFmt, attribute, e.source.text))
+			tes3.messageBox{ message = "Value copied to clipboard." }
+		end)
+        v:register("help", copyDataTooltip)
     end
 
     local function addColourDetail(attribute)
@@ -248,8 +264,14 @@ local function updateDetail(e)
         local v = valueBlock:createLabel{ id = this.id_valueText, text = text }
         v.minWidth = 160
         v.borderLeft = 15
+
+        v:register("mouseClick", function (e)
+			os.setClipboardText(string.format("%s = { %s }", attribute, e.source.text))
+			tes3.messageBox{ message = "Value copied to clipboard." }
+		end)
+        v:register("help", copyDataTooltip)
     end
-    
+
     local function addHeading(title)
         local t = labels:createLabel{ text = title }
         t.absolutePosAlignX = 1.0
@@ -259,9 +281,10 @@ local function updateDetail(e)
         v.borderTop = 10
         v.borderBottom = 10
     end
-    
+
     addDetail("name", nil)
     addDetail("id", nil)
+
     addDetail("visible", "bool")
     addDetail("disabled", "bool")
     addDetail("contentType", nil)
