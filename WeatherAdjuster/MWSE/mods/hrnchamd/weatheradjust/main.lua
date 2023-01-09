@@ -1347,9 +1347,11 @@ local function init()
         this.pixBuffer[i] = 0
     end
 
-    event.register("loaded", onLoaded)
-    event.register("cellChanged", onCellChanged)
-    event.register("weatherChangedImmediate", onWeatherSwitch)
+	-- Set priority to run before other weather mods.
+	local mod_priority = 1000
+    event.register("loaded", onLoaded, { priority = mod_priority })
+    event.register("cellChanged", onCellChanged, { priority = mod_priority })
+    event.register("weatherChangedImmediate", onWeatherSwitch, { priority = mod_priority })
     event.register("keyDown", toggle)
 end
 
