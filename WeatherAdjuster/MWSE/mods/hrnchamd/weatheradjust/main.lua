@@ -32,12 +32,24 @@ local function isShiftPressed()
     return input:isKeyDown(tes3.scanCode.lShift) or input:isKeyDown(tes3.scanCode.rShift)
 end
 
--- Reset to MGE default scattering data.
+local function invertScatterCol(c)
+    return { r = 1 - c[1], g = 1 - c[2], b = 1 - c[3] }
+end
+
+local function updateInverseScattering()
+    this.outscatterInv = invertScatterCol(this.outscatter)
+    this.inscatterInv = invertScatterCol(this.inscatter)
+end
+
+local function captureDefaultScattering()
+	this.defaultScattering = mge.weather.getScattering()
+end
+
 local function defaultScattering()
-    this.outscatter = { 0.07, 0.36, 0.76 }
-    this.inscatter = { 0.25, 0.38, 0.48 }
-    this.outscatterInv = { r = 1 - this.outscatter[1], g = 1 - this.outscatter[2], b = 1 - this.outscatter[3] }
-    this.inscatterInv = { r = 1 - this.inscatter[1], g = 1 - this.inscatter[2], b = 1 - this.inscatter[3] }
+    this.outscatter = table.deepcopy(this.defaultScattering.outscatter)
+    this.inscatter = table.deepcopy(this.defaultScattering.inscatter)
+
+	updateInverseScattering()
 end
 
 -- Update scattering from colour picker.
@@ -54,7 +66,7 @@ local function updateScattering()
         math.max(0.005, 1 - this.inscatterInv.b)
     }
 
-    mge.setWeatherScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
+    mge.weather.setScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
 end
 
 -- Save current weather to a preset table.
@@ -143,9 +155,9 @@ local function presetToCurrentWeather(p)
 
     this.outscatter = { p.outscatter[1], p.outscatter[2], p.outscatter[3] }
     this.inscatter = { p.inscatter[1], p.inscatter[2], p.inscatter[3] }
-    this.outscatterInv = { r = 1 - this.outscatter[1], g = 1 - this.outscatter[2], b = 1 - this.outscatter[3] }
-    this.inscatterInv = { r = 1 - this.inscatter[1], g = 1 - this.inscatter[2], b = 1 - this.inscatter[3] }
-    mge.setWeatherScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
+	updateInverseScattering()
+
+    mge.weather.setScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
 end
 
 -- Load non-active weathers from a preset table. Used for transitions.
@@ -280,7 +292,8 @@ local function applyWeatherDeltas(w, deltas, dt)
 
     lerpScatterCol(this.outscatter, deltas.outscatter)
     lerpScatterCol(this.inscatter, deltas.inscatter)
-    mge.setWeatherScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
+
+    mge.weather.setScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
 
     deltas.t = deltas.t + dt
 end
@@ -1326,6 +1339,7 @@ local function init()
     this.id_colourBlock = tes3ui.registerID("Hrn:WeatherAdjust.ColourBlock")
 
     this.activePreset = "default"
+	captureDefaultScattering()
     defaultScattering()
 
     this.defaultClouds = {}
