@@ -1,6 +1,6 @@
 --[[
-	Mod: Weather Adjuster
-	Author: Hrnchamd
+    Mod: Weather Adjuster
+    Author: Hrnchamd
     Version: 2.0
 ]]--
 
@@ -9,10 +9,10 @@ local this = {}
 local verString = "2.0"
 
 function this.onCreate(parent)
-	local pane = parent:createThinBorder{}
-	pane.layoutWidthFraction = 1.0
-	pane.layoutHeightFraction = 1.0
-	pane.paddingAllSides = 12
+    local pane = parent:createThinBorder{}
+    pane.layoutWidthFraction = 1.0
+    pane.layoutHeightFraction = 1.0
+    pane.paddingAllSides = 12
     pane.flowDirection = "top_to_bottom"
     this.pane = pane
 
@@ -37,7 +37,7 @@ function this.onCreate(parent)
     configBlock.widthProportional = 1.0
     configBlock.autoHeight = true
     configBlock.flowDirection = "top_to_bottom"
-    
+
     mwse.mcm.createKeyBinder(configBlock,
         {
             label = "Toggle weather editor window",
@@ -67,7 +67,7 @@ function this.onCreate(parent)
             }
         }
     )
-    
+
     mwse.mcm.createOnOffButton(configBlock,
         {
             class = "OnOffButton",
@@ -81,16 +81,16 @@ function this.onCreate(parent)
             }
         }
     )
-    
+
     parent:getTopLevelMenu():updateLayout()
 end
 
 function this.onClose(container)
-	mwse.saveConfig(this.configId, this.config)
+    mwse.saveConfig(this.configId, this.config)
 end
 
 function this.registerModConfig()
-	mwse.registerModConfig("Weather Adjuster", this)
+    mwse.registerModConfig("Weather Adjuster", this)
 end
 
 return this

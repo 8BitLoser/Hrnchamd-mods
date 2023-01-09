@@ -1,6 +1,6 @@
 --[[
-	Mod: Weather Adjuster
-	Author: Hrnchamd
+    Mod: Weather Adjuster
+    Author: Hrnchamd
     Version: 2.0
 ]]--
 
@@ -64,7 +64,7 @@ local function currentWeatherToPreset()
     end
 
     local p = {}
-    
+
     local wc = tes3.worldController.weatherController
     for i, w in ipairs(wc.weathers) do
         p[weatherNames[i]] = {
@@ -90,7 +90,7 @@ local function currentWeatherToPreset()
             p[weatherNames[i]].cloudTexture = w.cloudTexture
         end
     end
-    
+
     p.outscatter = { this.outscatter[1], this.outscatter[2], this.outscatter[3] }
     p.inscatter = { this.inscatter[1], this.inscatter[2], this.inscatter[3] }
     return p
@@ -103,7 +103,7 @@ local function presetToCurrentWeather(p)
         dest.g = src[2]
         dest.b = src[3]
     end
-    
+
     local changeTextures = not config.disableSkyTextureChanges
     local wc = tes3.worldController.weatherController
     for i, w in ipairs(wc.weathers) do
@@ -138,9 +138,9 @@ local function presetToCurrentWeather(p)
     else
         wc:switchImmediate(wc.currentWeather.index)
     end
-    
+
     wc:updateVisuals()
-    
+
     this.outscatter = { p.outscatter[1], p.outscatter[2], p.outscatter[3] }
     this.inscatter = { p.inscatter[1], p.inscatter[2], p.inscatter[3] }
     this.outscatterInv = { r = 1 - this.outscatter[1], g = 1 - this.outscatter[2], b = 1 - this.outscatter[3] }
@@ -155,7 +155,7 @@ local function presetToTransitionWeather(p)
         dest.g = src[2]
         dest.b = src[3]
     end
-    
+
     local changeTextures = not config.disableSkyTextureChanges
     local wc = tes3.worldController.weatherController
     for i, w in ipairs(wc.weathers) do
@@ -221,7 +221,7 @@ local function calcPresetDeltas(p, weather)
 
     local to = p[weatherNames[weather.index+1]]
     local deltas = { t = 0 }
-    
+
     deltas.skySunriseColor = calcDelta(to.skySunriseColor, weather.skySunriseColor)
     deltas.skyDayColor = calcDelta(to.skyDayColor, weather.skyDayColor)
     deltas.skySunsetColor = calcDelta(to.skySunsetColor, weather.skySunsetColor)
@@ -239,10 +239,10 @@ local function calcPresetDeltas(p, weather)
     deltas.sunSunsetColor = calcDelta(to.sunSunsetColor, weather.sunSunsetColor)
     deltas.sunNightColor = calcDelta(to.sunNightColor, weather.sunNightColor)
     deltas.sundiscSunsetColor = calcDelta(to.sundiscSunsetColor, weather.sundiscSunsetColor)
-    
+
     deltas.outscatter = calcDeltaScatter(p.outscatter, this.outscatter)
     deltas.inscatter = calcDeltaScatter(p.inscatter, this.inscatter)
-    
+
     return deltas
 end
 
@@ -277,7 +277,7 @@ local function applyWeatherDeltas(w, deltas, dt)
     lerpWeatherCol(w.sunNightColor, deltas.sunNightColor)
     lerpWeatherCol(w.sundiscSunsetColor, deltas.sundiscSunsetColor)
     tes3.worldController.weatherController:updateVisuals()
-    
+
     lerpScatterCol(this.outscatter, deltas.outscatter)
     lerpScatterCol(this.inscatter, deltas.inscatter)
     mge.setWeatherScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
@@ -303,7 +303,7 @@ local function sRGBToLCh(sRGB)
         0.2126368 * linRGB[1] + 0.7151830 * linRGB[2] + 0.0721802 * linRGB[3],
         0.0193306 * linRGB[1] + 0.1191972 * linRGB[2] + 0.9503726 * linRGB[3]
     }
-    
+
     -- To L*ab D65.
     xyz = { xyz[1] / 0.95047, xyz[2], xyz[3] / 1.08883 }
     for i = 1, 3 do
@@ -313,19 +313,19 @@ local function sRGBToLCh(sRGB)
             xyz[i] = 7.787*xyz[i] + 16/116
         end
     end
-    
+
     local Lab = {
         116 * xyz[2] - 16,
         500 * (xyz[1] - xyz[2]),
         200 * (xyz[2] - xyz[3])
     }
-    
+
     -- To LCh.
     local h = math.atan2(Lab[3], Lab[2])
     if (h < 0) then
         h = h + 2*math.pi
     end
-    
+
     local LCh = { Lab[1], math.sqrt(Lab[2]*Lab[2] + Lab[3]*Lab[3]), math.deg(h) }
     --print(string.format("XYZ %.5f %.5f %.5f", xyz[1], xyz[2], xyz[3]))
     --print(string.format("Lab %.5f %.5f %.5f", Lab[1], Lab[2], Lab[3]))
@@ -341,7 +341,7 @@ local function LChTosRGB(LCh)
         LCh[2] * math.cos(math.rad(LCh[3])),
         LCh[2] * math.sin(math.rad(LCh[3]))
     }
-    
+
     -- To XYZ with domain [0, 1]. Relative to D65/2deg.
     local xyz_pre = {}
     xyz_pre[2] = (Lab[1] + 16) / 116
@@ -355,14 +355,14 @@ local function LChTosRGB(LCh)
         end
     end
     xyz = { xyz[1] * 0.95047, xyz[2], xyz[3] * 1.08883 }
-    
+
     -- To sRGB with domain [0, 1]. Does not clamp.
     local rgb = {
         3.2410032 * xyz[1] + -1.5373990 * xyz[2] + -0.4986159 * xyz[3],
         -0.9692242 * xyz[1] + 1.8759300 * xyz[2] + 0.0415542 * xyz[3],
         0.0556394 * xyz[1] + -0.2040112 * xyz[2] + 1.0571490 * xyz[3]
     }
-    
+
     for i = 1, 3 do
         if (rgb[i] > 0.0031307) then
             rgb[i] = 1.055 * math.pow(rgb[i], 1/2.4) - 0.055
@@ -370,7 +370,7 @@ local function LChTosRGB(LCh)
             rgb[i] = 12.92 * rgb[i]
         end
     end
-    
+
     --print(string.format("Lab %.5f %.5f %.5f", Lab[1], Lab[2], Lab[3]))
     --print(string.format("XYZ %.5f %.5f %.5f", xyz[1], xyz[2], xyz[3]))
     --print(string.format("sRGB %.5f %.5f %.5f", rgb[1], rgb[2], rgb[3]))
@@ -409,7 +409,7 @@ local function LChTosRGBContainChroma(LCh)
         LCh_adj[2] = 0.5 * (validChroma + upperChroma)
         sRGB = LChTosRGB(LCh_adj)
     end
-    
+
     -- Clamp sRGB.
     for i = 1, 3 do
         sRGB[i] = math.max(0, math.min(1, sRGB[i]))
@@ -418,14 +418,14 @@ local function LChTosRGBContainChroma(LCh)
 end
 
 local function createPickerAdv(params)
-	local value = params.initial
+    local value = params.initial
     local channelText = { "L", "C", "h" }
     local channelRange = { 100, 140, 360 }
 
-	local pickerBlock = params.parent:createBlock{}
-	pickerBlock.flowDirection = "left_to_right"
-	pickerBlock.layoutWidthFraction = 1.0
-	pickerBlock.height = 24*3
+    local pickerBlock = params.parent:createBlock{}
+    pickerBlock.flowDirection = "left_to_right"
+    pickerBlock.layoutWidthFraction = 1.0
+    pickerBlock.height = 24*3
 
     local channelLabels = {}
     for i = 1, 3 do
@@ -433,15 +433,15 @@ local function createPickerAdv(params)
         local label = pickerBlock:createLabel({ text = channelText[i] })
         label.absolutePosAlignX = 0.02
         label.absolutePosAlignY = y
-        
+
         channelLabels[i] = pickerBlock:createLabel({ text = string.format("%.0f", value[i]) })
         channelLabels[i].absolutePosAlignX = 0.08
         channelLabels[i].absolutePosAlignY = y
     end
-    
-	local picker = pickerBlock:createRect{ color = {1, 1, 1} }
+
+    local picker = pickerBlock:createRect{ color = {1, 1, 1} }
     picker.borderLeft = 75
-	picker.width = 361
+    picker.width = 361
     picker.height = 72
     picker.imageScaleX = picker.width / 256
     picker.imageScaleY = picker.height / 3
@@ -495,24 +495,24 @@ local function createPickerAdv(params)
         local x = channelRange[channel] * propX
 
         value[channel] = x
-		channelLabels[channel].text = string.format("%.0f", x)
+        channelLabels[channel].text = string.format("%.0f", x)
         updatePalette()
 
-		if (params.onUpdate) then
-			params.onUpdate(value)
-		end
-	end)
+        if (params.onUpdate) then
+            params.onUpdate(value)
+        end
+    end)
 
     updatePalette()
-	return { block = horizontalBlock, label = label, pickerLabel = pickerLabel, picker = picker }
+    return { block = horizontalBlock, label = label, pickerLabel = pickerLabel, picker = picker }
 end
 
 local function createRadioButtonPackage(params)
     local buttons = {}
 
-	local horizontalBlock = params.parent:createBlock{ id = params.id }
-	horizontalBlock.flowDirection = "left_to_right"
-	horizontalBlock.layoutWidthFraction = 1.0
+    local horizontalBlock = params.parent:createBlock{ id = params.id }
+    horizontalBlock.flowDirection = "left_to_right"
+    horizontalBlock.layoutWidthFraction = 1.0
     horizontalBlock.autoHeight = true
 
     for i, label in ipairs(params.labels) do
@@ -538,7 +538,7 @@ local function createRadioButtonPackage(params)
 
     local n = params.initial or 1
     buttons[n].widget.state = 4
-    
+
     return { block = horizontalBlock, buttons = buttons }
 end
 
@@ -574,7 +574,7 @@ local function createTextureAdjuster(parent)
     label1.borderLeft = 8
     label1.borderTop = 8
     label1.borderBottom = 6
-    
+
     local texturePathFrame = parent:createThinBorder{}
     texturePathFrame.width = 400
     texturePathFrame.height = 30
@@ -599,7 +599,7 @@ local function createTextureAdjuster(parent)
         if (not string.find(texturePathInput.text, '%|')) then
             texturePathInput.text = texturePathInput.text .. "|"
         end
-        
+
         tes3ui.acquireTextInput(texturePathInput)
         e.source:getTopLevelMenu():updateLayout()
     end)
@@ -612,7 +612,7 @@ local function createTextureAdjuster(parent)
 
             -- Remove text caret.
             texturePathInput.text = path
-            
+
             -- Colour text depending on valid path. getFileExists checks BSAs.
             -- Update cloud texture if it exists.
             if (tes3.getFileExists(path)) then
@@ -628,7 +628,7 @@ local function createTextureAdjuster(parent)
                 texturePathInput.color = tes3ui.getPalette("answer_color")
             end
         end
-        
+
         tes3ui.acquireTextInput(nil)
         e.source:getTopLevelMenu():updateLayout()
     end)
@@ -642,7 +642,7 @@ local function changeAdjuster(e)
     local menu = tes3ui.findMenu(this.id_menu)
     local block = menu:findChild(this.id_colourBlock)
     block:destroyChildren()
-    
+
     skyTip = "Affects sky colouring together with fog."
     fogTip = "Affects fog, cloud, and horizon colour."
     sunTip = "Affects sun light colour."
@@ -650,7 +650,7 @@ local function changeAdjuster(e)
     sundiscTip = "Affects sun image at sunset. With sun shafts shader, affects sun halo only."
     outscatterTip = "MGE high quality atmosphere setting. Shared by all weathers in this preset.\nClear, cloudy, and transition weather only. Affects sky colour mainly near the sun."
     inscatterTip = "MGE high quality atmosphere setting. Shared by all weathers in this preset.\nClear, cloudy, and transition weather only. Affects sky colour mainly away from the sun."
-    
+
     if (e.option == 1) then
         createLChEdit(block, "Sky, Sunrise", skyTip, 1, this.w.skySunriseColor)
         createLChEdit(block, "Fog, Sunrise", fogTip, 2, this.w.fogSunriseColor)
@@ -678,7 +678,7 @@ local function changeAdjuster(e)
     elseif (e.option == 6) then
         createTextureAdjuster(block)
     end
-    
+
     this.editorMode = e.option
     menu:updateLayout()
 end
@@ -689,7 +689,7 @@ local function refreshEditor()
     local t = tes3.worldController.hour.value
     local h = math.floor(t)
     local m = math.floor(60 * (t - h))
-    
+
     local wc = tes3.worldController.weatherController
     local weatherTxt
     if (wc.nextWeather) then
@@ -698,11 +698,11 @@ local function refreshEditor()
         weatherTxt = weatherNames[wc.currentWeather.index+1]
     end
     label.text = string.format("%s, %d:%02d", weatherTxt, h, m)
-    
+
     changeAdjuster{ option = this.editorMode }
     menu:updateLayout()
 end
-    
+
 local function changeWeather(n)
     if (isShiftPressed()) then
         tes3.worldController.weatherController:switchTransition(n-1)
@@ -732,7 +732,7 @@ local function changeTime(e)
 
         wc:updateVisuals()
     end
-    
+
     this.w = tes3.getCurrentWeather()
     changeAdjuster(e)
     refreshEditor()
@@ -748,10 +748,10 @@ local function saveIniData(e)
         tes3.messageBox{ message = "Could not open output file." }
         return
     end
-    
+
     file:write("\n; ----------------------------------------\n; Weather Adjuster\n")
     file:write("; Preset \"" .. this.activePreset .. "\", " .. os.date("%Y-%m-%d %H:%M:%S"))
-    
+
     file:write("\n\n; Morrowind.ini compatible data\n\n")
     for i, w in ipairs(tes3.worldController.weatherController.weathers) do
         file:write(string.format("[Weather %s]\n", weatherNames[i]))
@@ -799,10 +799,10 @@ end
 local function createTabEditor()
     local page = tes3ui.findMenu(this.id_menu):findChild(this.id_tabPage)
     page:destroyChildren()
-    
+
     local switchBlock1 = page:createBlock{}
-	switchBlock1.flowDirection = "left_to_right"
-	switchBlock1.layoutWidthFraction = 1.0
+    switchBlock1.flowDirection = "left_to_right"
+    switchBlock1.layoutWidthFraction = 1.0
     switchBlock1.autoHeight = true
     switchBlock1:createLabel{ text = "Switch to:" }
     for i = 1, 5 do
@@ -811,8 +811,8 @@ local function createTabEditor()
         b:register("mouseClick", function(e) changeWeather(i) end)
     end
     local switchBlock2 = page:createBlock{}
-	switchBlock2.flowDirection = "left_to_right"
-	switchBlock2.layoutWidthFraction = 1.0
+    switchBlock2.flowDirection = "left_to_right"
+    switchBlock2.layoutWidthFraction = 1.0
     switchBlock2.autoHeight = true
     for i = 6, 10 do
         local b = switchBlock2:createTextSelect{ text = weatherNames[i] }
@@ -821,12 +821,12 @@ local function createTabEditor()
     end
 
     local timeBlock = page:createBlock{}
-	timeBlock.flowDirection = "left_to_right"
-	timeBlock.layoutWidthFraction = 1.0
+    timeBlock.flowDirection = "left_to_right"
+    timeBlock.layoutWidthFraction = 1.0
     timeBlock.autoHeight = true
     timeBlock.childAlignY = 0.4
     timeBlock.borderTop = 16
-    
+
     local wname = timeBlock:createLabel{ id = this.id_weatherName }
     wname.minWidth = 160
     local timeBack30 = timeBlock:createButton{ text = "-30 min" }
@@ -848,13 +848,13 @@ local function createTabEditor()
     modesHelp.borderTop = 4
     local modes = createRadioButtonPackage{ parent = page, id = this.id_modes, labels = {"Sunrise", "Day", "Sunset", "Night", "Atmos.", "Clouds"}, initial = this.editorMode, onUpdate = changeTime }
     modes.block.borderTop = 4
-    
+
     local colourBlock = page:createBlock{ id = this.id_colourBlock }
-	colourBlock.layoutWidthFraction = 1.0
+    colourBlock.layoutWidthFraction = 1.0
     colourBlock.autoHeight = true
     colourBlock.borderTop = 6
-	colourBlock.flowDirection = "top_to_bottom"
-    
+    colourBlock.flowDirection = "top_to_bottom"
+
     local undoRedo = page:createBlock{}
     undoRedo.absolutePosAlignX = 0.96
     undoRedo.absolutePosAlignY = 0.93
@@ -876,7 +876,7 @@ local function createTabEditor()
             refreshEditor()
         end
     end)
-    
+
     local saveBlock = page:createBlock{}
     saveBlock.absolutePosAlignX = 0.02
     saveBlock.absolutePosAlignY = 0.99
@@ -929,14 +929,14 @@ local function refreshPresets()
         table.insert(sorted, k)
     end
     table.sort(sorted)
-    
+
     for _, name in ipairs(sorted) do
         local item = presetList:createTextSelect{ text = name }
         if (name == this.activePreset) then
             item.widget.state = 4
             item:triggerEvent("mouseLeave")
         end
-        
+
         item:register("mouseClick", function(e)
             switchPreset(name)
 
@@ -958,8 +958,8 @@ local function createTabPresets()
     page:destroyChildren()
 
     local toolbar = page:createBlock{}
-	toolbar.flowDirection = "left_to_right"
-	toolbar.layoutWidthFraction = 1.0
+    toolbar.flowDirection = "left_to_right"
+    toolbar.layoutWidthFraction = 1.0
     toolbar.autoHeight = true
 
     local b
@@ -981,7 +981,7 @@ local function createTabPresets()
 
         refreshPresets()
     end)
-    
+
     b = toolbar:createButton{ text = "Rename" }
     b:register("mouseClick", function(e)
         if (this.activePreset == "default") then
@@ -993,7 +993,7 @@ local function createTabPresets()
         renameInput.parent.visible = true
         tes3ui.acquireTextInput(renameInput)
         menu:updateLayout()
-        
+
         renameInput:register("keyEnter", function(e)
             local renameInput = menu:findChild(this.id_renameInput)
             local oldName = this.activePreset
@@ -1008,7 +1008,7 @@ local function createTabPresets()
                 tes3.messageBox{ message = newName .. " is already used by another config." }
                 return
             end
-            
+
             config.presets[newName] = config.presets[oldName]
             this.activePreset = newName
             for k, v in pairs(config.regions) do
@@ -1053,23 +1053,23 @@ local function createTabPresets()
 
     local renamer = page:createThinBorder{}
     renamer.visible = false
-	renamer.layoutWidthFraction = 1.0
+    renamer.layoutWidthFraction = 1.0
     renamer.height = 30
     renamer.childAlignY = 0.5
     renamer.borderTop = 4
     renamer.borderBottom = 4
     renamer.paddingLeft = 4
     local renameInput = renamer:createTextInput{ id = this.id_renameInput }
-    
+
     local presetList = page:createVerticalScrollPane{ id = this.id_presetList }
     refreshPresets()
 end
-    
+
 local function createTabRegions()
     local menu = tes3ui.findMenu(this.id_menu)
     local page = menu:findChild(this.id_tabPage)
     page:destroyChildren()
-    
+
     local region = tes3.getPlayerCell().region
     local regionLabel = page:createLabel{ text = "Current region: " .. (region and region.id or "None") }
     regionLabel.borderBottom = 6
@@ -1105,7 +1105,7 @@ local function createTabRegions()
             end
         end)
     end
-    
+
     menu:updateLayout()
 end
 
@@ -1143,7 +1143,7 @@ local function createAdjuster()
     topBar.layoutWidthFraction = 1.0
     topBar.autoHeight = true
     topBar.childAlignY = 0.5
-    
+
     local active = topBar:createLabel{ id = this.id_activePreset, text = "Active: " .. this.activePreset }
     active.minWidth = 210
     active.maxWidth = 210
@@ -1152,7 +1152,7 @@ local function createAdjuster()
     divider.borderAllSides = 2
 
     local page = menu:createBlock{ id = this.id_tabPage }
-	page.flowDirection = "top_to_bottom"
+    page.flowDirection = "top_to_bottom"
     page.layoutWidthFraction = 1.0
     page.layoutHeightFraction = 1.0
 
@@ -1164,14 +1164,14 @@ local function toggle(e)
     if (tes3ui.findMenu(this.id_config_menu)) then
         return
     end
-    
+
     if (e.keyCode == config.keybind.keyCode
         and e.isAltDown == config.keybind.isAltDown
         and e.isControlDown == config.keybind.isControlDown
         and e.isShiftDown == config.keybind.isShiftDown) then
-        
+
         local menu = tes3ui.findMenu(this.id_menu)
-        
+
         if (not menu) then
             createAdjuster()
             if (not tes3ui.menuMode()) then
@@ -1196,14 +1196,14 @@ local function customTransition(e)
     if (not this.lastRegion) then
         return
     end
-    
+
     local wc = tes3.worldController.weatherController
     local dt = regionTransitionK * e.delta
 
     if (this.lerp) then
         -- Interpolate all colours for a single weather.
         applyWeatherDeltas(this.lerp.weather, this.lerp.deltas, dt)
-        
+
         if (this.lerp.deltas.t >= 1) then
             this.lerp = nil
         end
@@ -1228,7 +1228,7 @@ local function customTransition(e)
 
             event.unregister("simulate", customTransition)
             this.simulateActive = nil
-            
+
             if (config.messageOnRegionChange) then
                 tes3.messageBox{ message = "Weather Adjuster transition done." }
             end
@@ -1256,7 +1256,7 @@ local function onCellChanged()
                     this.simulateActive = nil
                     this.lerp = nil
                 end
-                
+
                 -- Switch preset and update visuals.
                 switchPreset(pname)
                 if (config.messageOnRegionChange) then
@@ -1307,7 +1307,7 @@ local function onLoaded()
     if (not config.presets.default) then
         config.presets.default = currentWeatherToPreset()
     end
-    
+
     this.lastRegion = nil
     onCellChanged()
 end
@@ -1327,7 +1327,7 @@ local function init()
 
     this.activePreset = "default"
     defaultScattering()
-    
+
     this.defaultClouds = {}
     for i, w in ipairs(tes3.worldController.weatherController.weathers) do
         this.defaultClouds[i] = w.cloudTexture
@@ -1335,7 +1335,7 @@ local function init()
 
     this.undoStack = {}
     this.redoStack = {}
-    
+
     this.lchTextures = {}
     for i = 1, 4 do
         this.lchTextures[i] = niPixelData.new(256, 4):createSourceTexture()
