@@ -32,6 +32,14 @@ local function isShiftPressed()
     return input:isKeyDown(tes3.scanCode.lShift) or input:isKeyDown(tes3.scanCode.rShift)
 end
 
+local function copyOptionalVec3(src, default)
+    if src then
+        return { src[1], src[2], src[3] }
+    else
+        return table.deepcopy(default)
+    end
+end
+
 local function invertScatterCol(c)
     return { r = 1 - c[1], g = 1 - c[2], b = 1 - c[3] }
 end
@@ -39,17 +47,21 @@ end
 local function updateInverseScattering()
     this.outscatterInv = invertScatterCol(this.outscatter)
     this.inscatterInv = invertScatterCol(this.inscatter)
+    this.skylightScatterCol = { r = this.skylightScatter[1], g = this.skylightScatter[2], b = this.skylightScatter[3] }
 end
 
 local function captureDefaultScattering()
-	this.defaultScattering = mge.weather.getScattering()
+    this.defaultScattering = mge.weather.getScattering()
+    this.defaultSkylightScattering = mge.weather.getSkylightScattering()
 end
 
 local function defaultScattering()
     this.outscatter = table.deepcopy(this.defaultScattering.outscatter)
     this.inscatter = table.deepcopy(this.defaultScattering.inscatter)
+    this.skylightScatter = table.deepcopy(this.defaultSkylightScattering.skylight)
+    this.skylightScatterMix = this.defaultSkylightScattering.mix
 
-	updateInverseScattering()
+    updateInverseScattering()
 end
 
 -- Update scattering from colour picker.
@@ -65,8 +77,14 @@ local function updateScattering()
         math.max(0.005, 1 - this.inscatterInv.g),
         math.max(0.005, 1 - this.inscatterInv.b)
     }
+    this.skylightScatter = {
+        this.skylightScatterCol.r,
+        this.skylightScatterCol.g,
+        this.skylightScatterCol.b
+    }
 
     mge.weather.setScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
+    mge.weather.setSkylightScattering{ skylight = this.skylightScatter, mix = this.skylightScatterMix }
 end
 
 -- Save current weather to a preset table.
@@ -103,8 +121,10 @@ local function currentWeatherToPreset()
         end
     end
 
-    p.outscatter = { this.outscatter[1], this.outscatter[2], this.outscatter[3] }
-    p.inscatter = { this.inscatter[1], this.inscatter[2], this.inscatter[3] }
+    p.outscatter = table.deepcopy(this.outscatter)
+    p.inscatter = table.deepcopy(this.inscatter)
+    p.skylightScatter = table.deepcopy(this.skylightScatter)
+    p.skylightScatterMix = this.skylightScatterMix
     return p
 end
 
@@ -153,11 +173,14 @@ local function presetToCurrentWeather(p)
 
     wc:updateVisuals()
 
-    this.outscatter = { p.outscatter[1], p.outscatter[2], p.outscatter[3] }
-    this.inscatter = { p.inscatter[1], p.inscatter[2], p.inscatter[3] }
-	updateInverseScattering()
+    this.outscatter = copyOptionalVec3(p.outscatter, this.defaultScattering.outscatter)
+    this.inscatter = copyOptionalVec3(p.inscatter, this.defaultScattering.inscatter)
+    this.skylightScatter = copyOptionalVec3(p.skylightScatter, this.defaultSkylightScattering.skylight)
+    this.skylightScatterMix = p.skylightScatterMix or this.defaultSkylightScattering.mix
+    updateInverseScattering()
 
     mge.weather.setScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
+    mge.weather.setSkylightScattering{ skylight = this.skylightScatter, mix = this.skylightScatterMix }
 end
 
 -- Load non-active weathers from a preset table. Used for transitions.
@@ -252,8 +275,15 @@ local function calcPresetDeltas(p, weather)
     deltas.sunNightColor = calcDelta(to.sunNightColor, weather.sunNightColor)
     deltas.sundiscSunsetColor = calcDelta(to.sundiscSunsetColor, weather.sundiscSunsetColor)
 
-    deltas.outscatter = calcDeltaScatter(p.outscatter, this.outscatter)
-    deltas.inscatter = calcDeltaScatter(p.inscatter, this.inscatter)
+    local to_outscatter = copyOptionalVec3(p.outscatter, this.defaultScattering.outscatter)
+    local to_inscatter = copyOptionalVec3(p.inscatter, this.defaultScattering.inscatter)
+    local to_skylightScatter = copyOptionalVec3(p.skylightScatter, this.defaultSkylightScattering.skylight)
+    local to_skylightScatterMix = p.skylightScatterMix or this.defaultSkylightScattering.mix
+
+    deltas.outscatter = calcDeltaScatter(to_outscatter, this.outscatter)
+    deltas.inscatter = calcDeltaScatter(to_inscatter, this.inscatter)
+    deltas.skylightScatter = calcDeltaScatter(to_skylightScatter, this.skylightScatter)
+    deltas.skylightScatterMix = to_skylightScatterMix - this.skylightScatterMix
 
     return deltas
 end
@@ -269,6 +299,9 @@ local function applyWeatherDeltas(w, deltas, dt)
         c[1] = c[1] + dt * delta[1]
         c[2] = c[2] + dt * delta[2]
         c[3] = c[3] + dt * delta[3]
+    end
+    local function lerpScalar(c, delta)
+        return c + dt * delta
     end
 
     lerpWeatherCol(w.skySunriseColor, deltas.skySunriseColor)
@@ -292,8 +325,11 @@ local function applyWeatherDeltas(w, deltas, dt)
 
     lerpScatterCol(this.outscatter, deltas.outscatter)
     lerpScatterCol(this.inscatter, deltas.inscatter)
+    lerpScatterCol(this.skylightScatter, deltas.skylightScatter)
+    this.skylightScatterMix = lerpScalar(this.skylightScatterMix, deltas.skylightScatterMix)
 
     mge.weather.setScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
+    mge.weather.setSkylightScattering{ skylight = this.skylightScatter, mix = this.skylightScatterMix }
 
     deltas.t = deltas.t + dt
 end
@@ -661,8 +697,9 @@ local function changeAdjuster(e)
     sunTip = "Affects sun light colour."
     ambTip = "Base light level, affects shadow colour. Additive with sun light."
     sundiscTip = "Affects sun image at sunset. With sun shafts shader, affects sun halo only."
-    outscatterTip = "MGE high quality atmosphere setting. Shared by all weathers in this preset.\nClear, cloudy, and transition weather only. Affects sky colour mainly near the sun."
-    inscatterTip = "MGE high quality atmosphere setting. Shared by all weathers in this preset.\nClear, cloudy, and transition weather only. Affects sky colour mainly away from the sun."
+    outscatterTip = "MGE High quality atmosphere setting. Shared by all weathers in this preset.\nClear, cloudy, and transition weather only. Affects sky colour mainly near the sun."
+    inscatterTip = "MGE High quality atmosphere setting. Shared by all weathers in this preset.\nClear, cloudy, and transition weather only. Affects sky colour mainly away from the sun."
+    skylightTip = "MGE High quality atmosphere setting. Shared by all weathers in this preset.\nAdditional atmosphere colour from multiple scattering, which is mixed with the sky colour for the current time of day.\nThe mix percentage is controlled below.\nAllows extra control of brightness and tinting of the atmosphere. Prefer to use a neutral colour."
 
     if (e.option == 1) then
         createLChEdit(block, "Sky, Sunrise", skyTip, 1, this.w.skySunriseColor)
@@ -688,6 +725,7 @@ local function changeAdjuster(e)
         createLChEdit(block, "Sun Disc, Sunset  [?]", sundiscTip, 1, this.w.sundiscSunsetColor)
         createLChEdit(block, "Atmosphere Outscatter  [?]", outscatterTip, 2, this.outscatterInv, true)
         createLChEdit(block, "Atmosphere Inscatter  [?]", inscatterTip, 3, this.inscatterInv, true)
+        createLChEdit(block, "Atmosphere Skylight  [?]", skylightTip, 4, this.skylightScatterCol, true)
     elseif (e.option == 6) then
         createTextureAdjuster(block)
     end
@@ -1339,7 +1377,7 @@ local function init()
     this.id_colourBlock = tes3ui.registerID("Hrn:WeatherAdjust.ColourBlock")
 
     this.activePreset = "default"
-	captureDefaultScattering()
+    captureDefaultScattering()
     defaultScattering()
 
     this.defaultClouds = {}
@@ -1361,8 +1399,8 @@ local function init()
         this.pixBuffer[i] = 0
     end
 
-	-- Set priority to run before other weather mods.
-	local mod_priority = 1000
+    -- Set priority to run before other weather mods.
+    local mod_priority = 1000
     event.register("loaded", onLoaded, { priority = mod_priority })
     event.register("cellChanged", onCellChanged, { priority = mod_priority })
     event.register("weatherChangedImmediate", onWeatherSwitch, { priority = mod_priority })
