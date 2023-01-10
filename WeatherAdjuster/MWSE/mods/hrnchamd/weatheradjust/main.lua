@@ -847,7 +847,7 @@ local function changeWeather(n)
     refreshEditor()
 end
 
-local function changeTime(e)
+local function changeColourEditPage(e)
     if (isShiftPressed()) then
         local wc = tes3.worldController.weatherController
 
@@ -865,7 +865,7 @@ local function changeTime(e)
     end
 
     this.w = tes3.getCurrentWeather()
-    changeAdjuster(e)
+    this.editorMode = e.option
     refreshEditor()
 end
 
@@ -977,7 +977,7 @@ local function createTabEditor()
 
     local modesHelp = page:createLabel{ text = "Shift + selector to set time." }
     modesHelp.borderTop = 4
-    local modes = createRadioButtonPackage{ parent = page, id = this.id_modes, labels = {"Sunrise", "Day", "Sunset", "Night", "Atmos.", "Clouds"}, initial = this.editorMode, onUpdate = changeTime }
+    local modes = createRadioButtonPackage{ parent = page, id = this.id_modes, labels = {"Sunrise", "Day", "Sunset", "Night", "Atmos.", "Clouds"}, initial = this.editorMode, onUpdate = changeColourEditPage }
     modes.block.borderTop = 4
 
     local colourBlock = page:createBlock{ id = this.id_colourBlock }
