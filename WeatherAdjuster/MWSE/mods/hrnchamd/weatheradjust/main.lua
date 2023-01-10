@@ -1270,8 +1270,10 @@ local function createAdjuster()
         menu.positionX = this.menuX
         menu.positionY = this.menuY
     else
+        -- Set defaults before loading
         menu.positionX = menu.maxWidth / 2 - menu.width
         menu.positionY = 400
+        menu:loadMenuPosition()
     end
 
     local topBar = menu:createBlock{}
