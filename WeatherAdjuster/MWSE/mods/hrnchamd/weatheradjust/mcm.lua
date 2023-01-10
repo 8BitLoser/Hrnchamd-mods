@@ -10,17 +10,17 @@ local verString = "2.0"
 
 function this.onCreate(parent)
     local pane = parent:createThinBorder{}
-    pane.layoutWidthFraction = 1.0
-    pane.layoutHeightFraction = 1.0
+    pane.widthProportional = 1.0
+    pane.heightProportional = 1.0
     pane.paddingAllSides = 12
-    pane.flowDirection = "top_to_bottom"
+    pane.flowDirection = tes3.flowDirection.topToBottom
     this.pane = pane
 
     local subhead1 = pane:createLabel{ text = "quis nostrum exercitationem ullam corporis suscipit laboriosam" }
     subhead1.font = 2
 
     local header = pane:createLabel{ text = "Weather Adjuster - from Sun's Reach Laboratorum\nversion " .. verString }
-    header.color = tes3ui.getPalette("header_color")
+    header.color = tes3ui.getPalette(tes3.palette.header_color)
     header.borderAllSides = 12
 
     local subhead2 = pane:createLabel{ text = "sed quia consequuntur magni dolores eos" }
@@ -36,7 +36,7 @@ function this.onCreate(parent)
     configBlock.maxWidth = 600
     configBlock.widthProportional = 1.0
     configBlock.autoHeight = true
-    configBlock.flowDirection = "top_to_bottom"
+    configBlock.flowDirection = tes3.flowDirection.topToBottom
 
     mwse.mcm.createKeyBinder(configBlock,
         {

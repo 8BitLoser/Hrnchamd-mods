@@ -472,8 +472,8 @@ local function createPickerAdv(params)
     local channelRange = { 100, 140, 360 }
 
     local pickerBlock = params.parent:createBlock{}
-    pickerBlock.flowDirection = "left_to_right"
-    pickerBlock.layoutWidthFraction = 1.0
+    pickerBlock.flowDirection = tes3.flowDirection.leftToRight
+    pickerBlock.widthProportional = 1.0
     pickerBlock.height = 24*3
 
     local channelLabels = {}
@@ -529,15 +529,15 @@ local function createPickerAdv(params)
         picker.imageFilter = false
     end
 
-    picker:register("mouseDown", function(e)
+    picker:register(tes3.uiEvent.mouseDown, function(e)
         table.insert(this.undoStack, currentWeatherToPreset())
         this.redoStack = {}
         tes3ui.captureMouseDrag(true)
     end)
-    picker:register("mouseRelease", function(e)
+    picker:register(tes3.uiEvent.mouseRelease, function(e)
         tes3ui.captureMouseDrag(false)
     end)
-    picker:register("mouseStillPressed", function(e)
+    picker:register(tes3.uiEvent.mouseStillPressed, function(e)
         local propX = math.max(0, math.min(1, e.relativeX / picker.width))
         local propY = math.max(0, math.min(1, e.relativeY / picker.height))
         local channel = math.min(3, 1 + math.floor(3 * propY))
@@ -560,13 +560,13 @@ local function createRadioButtonPackage(params)
     local buttons = {}
 
     local horizontalBlock = params.parent:createBlock{ id = params.id }
-    horizontalBlock.flowDirection = "left_to_right"
-    horizontalBlock.layoutWidthFraction = 1.0
+    horizontalBlock.flowDirection = tes3.flowDirection.leftToRight
+    horizontalBlock.widthProportional = 1.0
     horizontalBlock.autoHeight = true
 
     for i, label in ipairs(params.labels) do
         buttons[i] = horizontalBlock:createButton{ text = label }
-        buttons[i]:register("mouseClick", function(e)
+        buttons[i]:register(tes3.uiEvent.mouseClick, function(e)
             local n = -1
             for i, button in ipairs(buttons) do
                 if (button == e.source) then
@@ -598,7 +598,7 @@ local function createLChEdit(parent, text, tip, textureID, binding, updateMGE)
     local label = parent:createLabel{ text = text }
     label.borderTop = 6
     label.borderBottom = 2
-    label:register("help", function(e)
+    label:register(tes3.uiEvent.help, function(e)
         local tooltip = tes3ui.createTooltipMenu()
         tooltip:createLabel{ text = tip }
     end)
@@ -634,14 +634,14 @@ local function createSkyMixEdit(parent, text, tip)
     local label = parent:createLabel{ text = text }
     label.borderTop = 6
     label.borderBottom = 2
-    label:register("help", function(e)
+    label:register(tes3.uiEvent.help, function(e)
         local tooltip = tes3ui.createTooltipMenu()
         tooltip:createLabel{ text = tip }
     end)
 
     local textColour = { 0.96, 0.96, 0.96 }
     local editBlock = parent:createBlock{ id = this.id_swatches }
-    editBlock.flowDirection = "left_to_right"
+    editBlock.flowDirection = tes3.flowDirection.leftToRight
     editBlock.widthProportional = 1
     editBlock.height = 45
     editBlock.borderLeft = 35
@@ -683,8 +683,8 @@ local function createSkyMixEdit(parent, text, tip)
     end
     
     updateSwatches()
-    editBlock:register("update", updateSwatches)
-    s:register("PartScrollBar_changed", function(e)
+    editBlock:register(tes3.uiEvent.update, updateSwatches)
+    s:register(tes3.uiEvent.partScrollBarChanged, function(e)
         table.insert(this.undoStack, currentWeatherToPreset())
 
         value = e.source.widget.current / 1000
@@ -711,14 +711,14 @@ local function createTextureAdjuster(parent)
     texturePathFrame.paddingLeft = 4
     texturePathFrame.childAlignY = 0.5
     local texturePathInput = texturePathFrame:createTextInput{}
-    texturePathInput.color = tes3ui.getPalette("active_color")
+    texturePathInput.color = tes3ui.getPalette(tes3.palette.active_color)
     texturePathInput.text = wc.currentWeather.cloudTexture or "<use default>"
     texturePathInput.consumeMouseEvents = false
     local textureReset = parent:createButton{ text = "Reset" }
     textureReset.borderLeft = 8
     textureReset.borderBottom = 12
 
-    texturePathFrame:register("mouseClick", function(e)
+    texturePathFrame:register(tes3.uiEvent.mouseClick, function(e)
         if (not wc.currentWeather.cloudTexture) then
             texturePathInput.text = ""
         end
@@ -731,7 +731,7 @@ local function createTextureAdjuster(parent)
         tes3ui.acquireTextInput(texturePathInput)
         e.source:getTopLevelMenu():updateLayout()
     end)
-    texturePathInput:register("keyEnter", function(e)
+    texturePathInput:register(tes3.uiEvent.keyEnter, function(e)
         if (texturePathInput.text == "") then
             texturePathInput.color = { 0.5, 0.5, 0.5 }
             texturePathInput.text = wc.currentWeather.cloudTexture
@@ -744,7 +744,7 @@ local function createTextureAdjuster(parent)
             -- Colour text depending on valid path. getFileExists checks BSAs.
             -- Update cloud texture if it exists.
             if (tes3.getFileExists(path)) then
-                texturePathInput.color = tes3ui.getPalette("active_color")
+                texturePathInput.color = tes3ui.getPalette(tes3.palette.active_color)
                 if (path ~= wc.currentWeather.cloudTexture) then
                     table.insert(this.undoStack, currentWeatherToPreset())
                     this.redoStack = {}
@@ -753,16 +753,16 @@ local function createTextureAdjuster(parent)
                     wc:switchImmediate(wc.currentWeather.index)
                 end
             else
-                texturePathInput.color = tes3ui.getPalette("answer_color")
+                texturePathInput.color = tes3ui.getPalette(tes3.palette.answer_color)
             end
         end
 
         tes3ui.acquireTextInput(nil)
         e.source:getTopLevelMenu():updateLayout()
     end)
-    textureReset:register("mouseClick", function(e)
+    textureReset:register(tes3.uiEvent.mouseClick, function(e)
         texturePathInput.text = this.defaultClouds[wc.currentWeather.index+1]
-        texturePathInput:triggerEvent("keyEnter")
+        texturePathInput:triggerEvent(tes3.uiEvent.keyEnter)
     end)
 end
 
@@ -932,28 +932,28 @@ local function createTabEditor()
     page:destroyChildren()
 
     local switchBlock1 = page:createBlock{}
-    switchBlock1.flowDirection = "left_to_right"
-    switchBlock1.layoutWidthFraction = 1.0
+    switchBlock1.flowDirection = tes3.flowDirection.leftToRight
+    switchBlock1.widthProportional = 1.0
     switchBlock1.autoHeight = true
     switchBlock1:createLabel{ text = "Switch to:" }
     for i = 1, 5 do
         local b = switchBlock1:createTextSelect{ text = weatherNames[i] }
         b.borderLeft = 12
-        b:register("mouseClick", function(e) changeWeather(i) end)
+        b:register(tes3.uiEvent.mouseClick, function(e) changeWeather(i) end)
     end
     local switchBlock2 = page:createBlock{}
-    switchBlock2.flowDirection = "left_to_right"
-    switchBlock2.layoutWidthFraction = 1.0
+    switchBlock2.flowDirection = tes3.flowDirection.leftToRight
+    switchBlock2.widthProportional = 1.0
     switchBlock2.autoHeight = true
     for i = 6, 10 do
         local b = switchBlock2:createTextSelect{ text = weatherNames[i] }
         b.borderLeft = 12
-        b:register("mouseClick", function(e) changeWeather(i) end)
+        b:register(tes3.uiEvent.mouseClick, function(e) changeWeather(i) end)
     end
 
     local timeBlock = page:createBlock{}
-    timeBlock.flowDirection = "left_to_right"
-    timeBlock.layoutWidthFraction = 1.0
+    timeBlock.flowDirection = tes3.flowDirection.leftToRight
+    timeBlock.widthProportional = 1.0
     timeBlock.autoHeight = true
     timeBlock.childAlignY = 0.4
     timeBlock.borderTop = 16
@@ -962,13 +962,13 @@ local function createTabEditor()
     wname.minWidth = 160
     local timeBack30 = timeBlock:createButton{ text = "-30 min" }
     timeBack30.borderLeft = 30
-    timeBack30:register("mouseClick", function(e)
+    timeBack30:register(tes3.uiEvent.mouseClick, function(e)
         tes3.worldController.hour.value = (tes3.worldController.hour.value - 0.5) % 24
         tes3.worldController.weatherController:updateVisuals()
         refreshEditor()
     end)
     local timeFwd30 = timeBlock:createButton{ text = "+30 min" }
-    timeFwd30:register("mouseClick", function(e)
+    timeFwd30:register(tes3.uiEvent.mouseClick, function(e)
         tes3.worldController.hour.value = (tes3.worldController.hour.value + 0.5) % 24
         tes3.worldController.weatherController:updateVisuals()
         refreshEditor()
@@ -981,10 +981,10 @@ local function createTabEditor()
     modes.block.borderTop = 4
 
     local colourBlock = page:createBlock{ id = this.id_colourBlock }
-    colourBlock.layoutWidthFraction = 1.0
+    colourBlock.widthProportional = 1.0
     colourBlock.autoHeight = true
     colourBlock.borderTop = 6
-    colourBlock.flowDirection = "top_to_bottom"
+    colourBlock.flowDirection = tes3.flowDirection.topToBottom
 
     local undoRedo = page:createBlock{}
     undoRedo.absolutePosAlignX = 0.96
@@ -992,7 +992,7 @@ local function createTabEditor()
     undoRedo.autoWidth = true
     undoRedo.autoHeight = true
     local undoButton = undoRedo:createButton{ text = "Undo" }
-    undoButton:register("mouseClick", function(e)
+    undoButton:register(tes3.uiEvent.mouseClick, function(e)
         if (#this.undoStack > 0) then
             table.insert(this.redoStack, currentWeatherToPreset())
             presetToCurrentWeather(table.remove(this.undoStack))
@@ -1000,7 +1000,7 @@ local function createTabEditor()
         end
     end)
     local redoButton = undoRedo:createButton{ text = "Redo" }
-    redoButton:register("mouseClick", function(e)
+    redoButton:register(tes3.uiEvent.mouseClick, function(e)
         if (#this.redoStack > 0) then
             table.insert(this.undoStack, currentWeatherToPreset())
             presetToCurrentWeather(table.remove(this.redoStack))
@@ -1015,13 +1015,13 @@ local function createTabEditor()
     saveBlock.autoHeight = true
 
     local save1 = saveBlock:createButton{ text = "Revert changes" }
-    save1:register("mouseClick", function(e)
+    save1:register(tes3.uiEvent.mouseClick, function(e)
         switchPreset(this.activePreset)
         refreshEditor()
         tes3.messageBox{ message = this.activePreset .. " reverted." }
     end)
     local save2 = saveBlock:createButton{ text = "Save preset" }
-    save2:register("mouseClick", function(e)
+    save2:register(tes3.uiEvent.mouseClick, function(e)
         if (this.activePreset == "default") then
             return
         end
@@ -1032,7 +1032,7 @@ local function createTabEditor()
         tes3.messageBox{ message = this.activePreset .. " saved." }
     end)
     local save3 = saveBlock:createButton{ text = "Save as new preset" }
-    save3:register("mouseClick", function(e)
+    save3:register(tes3.uiEvent.mouseClick, function(e)
         local newId
         for n = 1,9999 do
             newId = string.format("New Preset %d", n)
@@ -1065,16 +1065,16 @@ local function refreshPresets()
         local item = presetList:createTextSelect{ text = name }
         if (name == this.activePreset) then
             item.widget.state = 4
-            item:triggerEvent("mouseLeave")
+            item:triggerEvent(tes3.uiEvent.mouseLeave)
         end
 
-        item:register("mouseClick", function(e)
+        item:register(tes3.uiEvent.mouseClick, function(e)
             switchPreset(name)
 
             local listContents = e.source.parent
             for _, x in ipairs(listContents.children) do
                 x.widget.state = 1
-                x:triggerEvent("mouseLeave")
+                x:triggerEvent(tes3.uiEvent.mouseLeave)
             end
             e.source.widget.state = 4
             menu:updateLayout()
@@ -1089,13 +1089,13 @@ local function createTabPresets()
     page:destroyChildren()
 
     local toolbar = page:createBlock{}
-    toolbar.flowDirection = "left_to_right"
-    toolbar.layoutWidthFraction = 1.0
+    toolbar.flowDirection = tes3.flowDirection.leftToRight
+    toolbar.widthProportional = 1.0
     toolbar.autoHeight = true
 
     local b
     b = toolbar:createButton{ text = "Copy" }
-    b:register("mouseClick", function(e)
+    b:register(tes3.uiEvent.mouseClick, function(e)
         local copyId
         for n = 1,9999 do
             copyId = string.format("%s (%d)", this.activePreset, n)
@@ -1114,7 +1114,7 @@ local function createTabPresets()
     end)
 
     b = toolbar:createButton{ text = "Rename" }
-    b:register("mouseClick", function(e)
+    b:register(tes3.uiEvent.mouseClick, function(e)
         if (this.activePreset == "default") then
             return
         end
@@ -1125,7 +1125,7 @@ local function createTabPresets()
         tes3ui.acquireTextInput(renameInput)
         menu:updateLayout()
 
-        renameInput:register("keyEnter", function(e)
+        renameInput:register(tes3.uiEvent.keyEnter, function(e)
             local renameInput = menu:findChild(this.id_renameInput)
             local oldName = this.activePreset
             local newName = renameInput.text
@@ -1157,7 +1157,7 @@ local function createTabPresets()
     end)
 
     b = toolbar:createButton{ text = "Delete" }
-    b:register("mouseClick", function(e)
+    b:register(tes3.uiEvent.mouseClick, function(e)
         if (this.activePreset == "default") then
             return
         end
@@ -1180,11 +1180,11 @@ local function createTabPresets()
 
     b = toolbar:createButton{ text = "Save as INI" }
     b.borderLeft = 125
-    b:register("mouseClick", saveIniData)
+    b:register(tes3.uiEvent.mouseClick, saveIniData)
 
     local renamer = page:createThinBorder{}
     renamer.visible = false
-    renamer.layoutWidthFraction = 1.0
+    renamer.widthProportional = 1.0
     renamer.height = 30
     renamer.childAlignY = 0.5
     renamer.borderTop = 4
@@ -1215,7 +1215,7 @@ local function createTabRegions()
         local itemRegion = item:createLabel{ text = "- " .. (config.regions[region.id] or "default") }
         itemRegion.consumeMouseEvents = false
 
-        item:register("mouseClick", function(e)
+        item:register(tes3.uiEvent.mouseClick, function(e)
             if (isShiftPressed()) then
                 -- Set region preset.
                 config.regions[region.id] = this.activePreset
@@ -1226,7 +1226,7 @@ local function createTabRegions()
                 local listContents = e.source.parent
                 for i, x in ipairs(listContents.children) do
                     x.widget.state = 1
-                    x:triggerEvent("mouseLeave")
+                    x:triggerEvent(tes3.uiEvent.mouseLeave)
                 end
                 e.source.widget.state = 4
                 menu:updateLayout()
@@ -1271,7 +1271,7 @@ local function createAdjuster()
     end
 
     local topBar = menu:createBlock{}
-    topBar.layoutWidthFraction = 1.0
+    topBar.widthProportional = 1.0
     topBar.autoHeight = true
     topBar.childAlignY = 0.5
 
@@ -1283,9 +1283,9 @@ local function createAdjuster()
     divider.borderAllSides = 2
 
     local page = menu:createBlock{ id = this.id_tabPage }
-    page.flowDirection = "top_to_bottom"
-    page.layoutWidthFraction = 1.0
-    page.layoutHeightFraction = 1.0
+    page.flowDirection = tes3.flowDirection.topToBottom
+    page.widthProportional = 1.0
+    page.heightProportional = 1.0
 
     menu:updateLayout()
     onTabChange{ option = this.tabMode or 1 }
@@ -1357,7 +1357,7 @@ local function customTransition(e)
             -- End interpolation by setting all weathers to exact colours, without interrupting transitions.
             switchPreset(this.activePreset)
 
-            event.unregister("simulate", customTransition)
+            event.unregister(tes3.event.simulate, customTransition)
             this.simulateActive = nil
 
             if (config.messageOnRegionChange) then
@@ -1383,7 +1383,7 @@ local function onCellChanged()
             if (immediate) then
                 -- Cancel interpolation.
                 if (this.simulateActive) then
-                    event.unregister("simulate", customTransition)
+                    event.unregister(tes3.event.simulate, customTransition)
                     this.simulateActive = nil
                     this.lerp = nil
                 end
@@ -1423,7 +1423,7 @@ local function onCellChanged()
 
                 -- Begin interpolation.
                 if (not this.simulateActive) then
-                    event.register("simulate", customTransition)
+                    event.register(tes3.event.simulate, customTransition)
                     this.simulateActive = true
                 end
                 if (config.messageOnRegionChange) then
@@ -1482,14 +1482,14 @@ local function init()
 
     -- Set priority to run before other weather mods.
     local mod_priority = 1000
-    event.register("loaded", onLoaded, { priority = mod_priority })
-    event.register("cellChanged", onCellChanged, { priority = mod_priority })
-    event.register("weatherChangedImmediate", onWeatherSwitch, { priority = mod_priority })
-    event.register("keyDown", toggle)
+    event.register(tes3.event.loaded, onLoaded, { priority = mod_priority })
+    event.register(tes3.event.cellChanged, onCellChanged, { priority = mod_priority })
+    event.register(tes3.event.weatherChangedImmediate, onWeatherSwitch, { priority = mod_priority })
+    event.register(tes3.event.keyDown, toggle)
 end
 
 mcm.configId = configId
 mcm.config = config
-event.register("modConfigReady", mcm.registerModConfig)
-event.register("initialized", init)
+event.register(tes3.event.modConfigReady, mcm.registerModConfig)
+event.register(tes3.event.initialized, init)
 mwse.log("[Weather Adjuster] Loaded successfully.")
