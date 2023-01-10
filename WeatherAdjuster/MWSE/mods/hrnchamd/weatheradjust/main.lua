@@ -661,7 +661,6 @@ local function createSkyMixEdit(parent, text, tip)
     editBlock.height = 45
     editBlock.borderLeft = 35
 
-
     local swatchSky = editBlock:createRect{}
     swatchSky.width = 70
     swatchSky.heightProportional = 1
@@ -683,29 +682,38 @@ local function createSkyMixEdit(parent, text, tip)
     label.absolutePosAlignX = 0.5
     label.color = textColour
 
-    local s = editBlock:createSlider{ current = value * 1000, min = 0, max = 1000, step = 10, jump = 50 }
+    local sliderBlock = editBlock:createBlock{}
+    sliderBlock.widthProportional = 1
+    sliderBlock.heightProportional = 1
+    sliderBlock.flowDirection = tes3.flowDirection.topToBottom
+
+    local s = sliderBlock:createSlider{ current = value * 1000, min = 0, max = 1000, step = 10, jump = 50 }
     s.width = 175
     s.borderLeft = 15
     s.borderRight = 20
     s.borderTop = 4
 
-    local updateSwatches = function()
+    local sliderLabel = sliderBlock:createLabel{ text = "%" }
+    sliderLabel.absolutePosAlignX = 0.5
+
+    local updateControl = function()
         local currentSkyColour = tes3.worldController.weatherController.currentSkyColor
         currentSkyColour = { currentSkyColour.r, currentSkyColour.g, currentSkyColour.b }
         swatchSky.color = currentSkyColour
         swatchSkylight.color = this.skylightScatter
         swatchMixed.color = lerpSwatchColours(currentSkyColour, this.skylightScatter, this.skylightScatterMix)
+        sliderLabel.text = string.format("%d%%", math.round(100 * this.skylightScatterMix))
     end
     
-    updateSwatches()
-    editBlock:register(tes3.uiEvent.update, updateSwatches)
+    updateControl()
+    editBlock:register(tes3.uiEvent.update, updateControl)
     s:register(tes3.uiEvent.partScrollBarChanged, function(e)
         table.insert(this.undoStack, currentWeatherToPreset())
 
         value = e.source.widget.current / 1000
         this.skylightScatterMix = value
 
-        updateSwatches()
+        updateControl()
         updateScattering()
     end)
 end
@@ -793,7 +801,8 @@ local function changeAdjuster(e)
     sundiscTip = "Affects sun image at sunset. With sun shafts shader, affects sun halo only."
     outscatterTip = "MGE High quality atmosphere setting. Shared by all weathers in this preset.\nClear, cloudy, and transition weather only. Affects sky colour mainly near the sun."
     inscatterTip = "MGE High quality atmosphere setting. Shared by all weathers in this preset.\nClear, cloudy, and transition weather only. Affects sky colour mainly away from the sun."
-    skylightTip = "MGE High quality atmosphere setting. Shared by all weathers in this preset.\nAdditional atmosphere colour from multiple scattering, which is mixed with the sky colour for the current time of day.\nThe mix percentage is controlled below.\nAllows extra control of brightness and tinting of the atmosphere. Prefer to use a neutral colour."
+    skylightTip = "MGE High quality atmosphere setting. Shared by all weathers in this preset.\nAdditional atmosphere colour from multiple scattering, which is mixed with the sky colour and used for sky and haze during the day.\nAllows extra control of brightness and tinting of the atmosphere. Prefer to use a neutral colour.\nThe mix percentage is controlled below."
+    skylightMixTip = "MGE High quality atmosphere setting. Shared by all weathers in this preset.\nControls mixing between the sky colour from the base game and the skylight colour, which produces a final colour used for sky and haze colour.\nThis mixing allows the final colour to vary during the day.\nAs guide, you should use between 20-50% mixing."
 
     if (e.option == 1) then
         createLChEdit(block, "Sky, Sunrise", skyTip, 1, this.w.skySunriseColor)
@@ -821,7 +830,7 @@ local function changeAdjuster(e)
         createLChEdit(block, "Atmosphere Inscatter  [?]", inscatterTip, 3, this.inscatterInv, true)
         if (mge.weather.getSkylightScattering) then
             createLChEdit(block, "Atmosphere Skylight  [?]", skylightTip, 4, this.skylightScatterCol, true)
-            createSkyMixEdit(block, "Sky Colour / Skylight Mix  [?]", skylightTip)
+            createSkyMixEdit(block, "Sky Colour / Skylight Mix  [?]", skylightMixTip)
         end
     elseif (e.option == 6) then
         createTextureAdjuster(block)
