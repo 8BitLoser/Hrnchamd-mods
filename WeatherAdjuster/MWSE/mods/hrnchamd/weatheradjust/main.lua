@@ -52,7 +52,13 @@ end
 
 local function captureDefaultScattering()
     this.defaultScattering = mge.weather.getScattering()
-    this.defaultSkylightScattering = mge.weather.getSkylightScattering()
+    
+    -- Check if the skylight API is available from MGE XE 0.15+
+    if (mge.weather.getSkylightScattering) then
+        this.defaultSkylightScattering = mge.weather.getSkylightScattering()
+    else
+        this.defaultSkylightScattering = { skylight = { 0,0,0 }, mix = 0 }
+    end
 end
 
 local function defaultScattering()
@@ -62,6 +68,15 @@ local function defaultScattering()
     this.skylightScatterMix = this.defaultSkylightScattering.mix
 
     updateInverseScattering()
+end
+
+local function setScattering()
+    mge.weather.setScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
+
+    -- Check if the skylight API is available from MGE XE 0.15+
+    if (mge.weather.setSkylightScattering) then
+        mge.weather.setSkylightScattering{ skylight = this.skylightScatter, mix = this.skylightScatterMix }
+    end
 end
 
 -- Update scattering from colour picker.
@@ -83,8 +98,7 @@ local function updateScattering()
         this.skylightScatterCol.b
     }
 
-    mge.weather.setScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
-    mge.weather.setSkylightScattering{ skylight = this.skylightScatter, mix = this.skylightScatterMix }
+    setScattering()
 end
 
 -- Save current weather to a preset table.
@@ -123,8 +137,12 @@ local function currentWeatherToPreset()
 
     p.outscatter = table.deepcopy(this.outscatter)
     p.inscatter = table.deepcopy(this.inscatter)
-    p.skylightScatter = table.deepcopy(this.skylightScatter)
-    p.skylightScatterMix = this.skylightScatterMix
+    
+    -- Only write skylight if it's editable
+    if (mge.weather.getSkylightScattering) then
+        p.skylightScatter = table.deepcopy(this.skylightScatter)
+        p.skylightScatterMix = this.skylightScatterMix
+    end
     return p
 end
 
@@ -177,10 +195,9 @@ local function presetToCurrentWeather(p)
     this.inscatter = copyOptionalVec3(p.inscatter, this.defaultScattering.inscatter)
     this.skylightScatter = copyOptionalVec3(p.skylightScatter, this.defaultSkylightScattering.skylight)
     this.skylightScatterMix = p.skylightScatterMix or this.defaultSkylightScattering.mix
-    updateInverseScattering()
 
-    mge.weather.setScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
-    mge.weather.setSkylightScattering{ skylight = this.skylightScatter, mix = this.skylightScatterMix }
+    updateInverseScattering()
+    setScattering()
 end
 
 -- Load non-active weathers from a preset table. Used for transitions.
@@ -328,9 +345,7 @@ local function applyWeatherDeltas(w, deltas, dt)
     lerpScatterCol(this.skylightScatter, deltas.skylightScatter)
     this.skylightScatterMix = lerpScalar(this.skylightScatterMix, deltas.skylightScatterMix)
 
-    mge.weather.setScattering{ outscatter = this.outscatter, inscatter = this.inscatter }
-    mge.weather.setSkylightScattering{ skylight = this.skylightScatter, mix = this.skylightScatterMix }
-
+    setScattering()
     deltas.t = deltas.t + dt
 end
 
@@ -804,8 +819,10 @@ local function changeAdjuster(e)
         createLChEdit(block, "Sun Disc, Sunset  [?]", sundiscTip, 1, this.w.sundiscSunsetColor)
         createLChEdit(block, "Atmosphere Outscatter  [?]", outscatterTip, 2, this.outscatterInv, true)
         createLChEdit(block, "Atmosphere Inscatter  [?]", inscatterTip, 3, this.inscatterInv, true)
-        createLChEdit(block, "Atmosphere Skylight  [?]", skylightTip, 4, this.skylightScatterCol, true)
-        createSkyMixEdit(block, "Sky Colour / Skylight Mix  [?]", skylightTip)
+        if (mge.weather.getSkylightScattering) then
+            createLChEdit(block, "Atmosphere Skylight  [?]", skylightTip, 4, this.skylightScatterCol, true)
+            createSkyMixEdit(block, "Sky Colour / Skylight Mix  [?]", skylightTip)
+        end
     elseif (e.option == 6) then
         createTextureAdjuster(block)
     end
