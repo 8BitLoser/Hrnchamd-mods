@@ -1,12 +1,11 @@
 --[[
     Mod: Weather Adjuster
     Author: Hrnchamd
-    Version: 2.0
+    Version: 3.0
 ]]--
 
 local this = {}
-
-local verString = "2.0"
+local verString = "3.0"
 
 function this.onCreate(parent)
     local pane = parent:createThinBorder{}

@@ -1,7 +1,7 @@
 --[[
     Mod: Weather Adjuster
     Author: Hrnchamd
-    Version: 2.0
+    Version: 3.0
 ]]--
 
 local mcm = require("hrnchamd.weatheradjust.mcm")
@@ -9,6 +9,7 @@ local weatherPatch = require("hrnchamd.weatheradjust.patch")
 weatherPatch.patchCloudVertexColours()
 
 local this = {}
+local verString = "3.0"
 
 local configId = "Weather Adjuster"
 local configDefault = {
@@ -1518,10 +1519,11 @@ local function init()
     event.register(tes3.event.cellChanged, onCellChanged, { priority = mod_priority })
     event.register(tes3.event.weatherChangedImmediate, onWeatherSwitch, { priority = mod_priority })
     event.register(tes3.event.keyDown, toggle)
+
+    mwse.log("[Weather Adjuster] v%s initialized successfully.", verString)
 end
 
 mcm.configId = configId
 mcm.config = config
 event.register(tes3.event.modConfigReady, mcm.registerModConfig)
 event.register(tes3.event.initialized, init)
-mwse.log("[Weather Adjuster] Loaded successfully.")

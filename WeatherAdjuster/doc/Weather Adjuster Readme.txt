@@ -1,7 +1,7 @@
 
-Weather Adjuster 2.0
+Weather Adjuster 3.0
 ---------------------
-by Hrnchamd, released 2021-07-27
+by Hrnchamd, released 2023-01-10
 
 
 Summary
@@ -20,7 +20,8 @@ Requirements
 ------------
 
 MGE XE 0.11.0 or later. https://www.nexusmods.com/morrowind/mods/41102
-MWSE 2.1 beta. Included with MGE XE 0.11.
+MGE XE 0.15.1 or later is required for skylight settings.
+MWSE 2.1. Included with MGE XE.
 
 
 Installation
@@ -35,6 +36,8 @@ Usage
 Press Shift-F4 to open the editor (this key is re-bindable in the Mod Options menu). There are three tabs: Presets, Regions, and Editor.
 
 Use the Editor tab to change weather colours and save them as new presets. You will have to play around with it. It uses LCh perceptual colour pickers for better selection of colours in the red-orange-yellow range, and makes chromaticity and brightness as independent as possible.
+
+The Atmosphere tab in the editor allows changing the colours used by the High quality atmosphere setting of MGE XE. See the tooltips on each category title for more explanation of each colour.
 
 Use the Preset tab to copy, rename and delete presets.
 
@@ -63,6 +66,12 @@ Morrowind has fully dynamic colours for all parts of the sky, driven by a few va
 
 Changes
 -------
+
+3.0
+- For high quality atmosphere rendering, skylight colour controls are added. This allows better control of sky and haze colour, and also opens up unnatural atmospheres that don't use blue shifted haze for distance cues. This requires MGE XE 0.15.1+ to use.
+- Time can be changed in 5 min increments with Shift-click on the existing 30 min time buttons.
+- The editor's window position is remembered.
+- Weather Adjuster events run at high priority for compatibility with other weather mods.
 
 2.0
 - The weather adjuster window will appear without the regular inventory menus appearing.
