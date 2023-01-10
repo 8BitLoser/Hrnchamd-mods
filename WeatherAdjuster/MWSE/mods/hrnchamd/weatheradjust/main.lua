@@ -597,6 +597,7 @@ local function createLChEdit(parent, text, tip, textureID, binding, updateMGE)
 
     local label = parent:createLabel{ text = text }
     label.borderTop = 6
+    label.borderBottom = 2
     label:register("help", function(e)
         local tooltip = tes3ui.createTooltipMenu()
         tooltip:createLabel{ text = tip }
@@ -607,6 +608,10 @@ local function createLChEdit(parent, text, tip, textureID, binding, updateMGE)
         binding.r, binding.g, binding.b = rgb[1], rgb[2], rgb[3]
         tes3.worldController.weatherController:updateVisuals()
 
+        local swatches = parent:findChild(this.id_swatches)
+        if (swatches) then
+            swatches:triggerEvent("update")
+        end
         if (updateMGE) then
             updateScattering()
         end
@@ -615,6 +620,80 @@ local function createLChEdit(parent, text, tip, textureID, binding, updateMGE)
     createPickerAdv{ parent = parent, initial = c, texture = this.lchTextures[textureID], onUpdate = callback }
 end
 
+local function lerpSwatchColours(x, y, t)
+    local c = {}
+    for i = 1,3 do
+        c[i] = (1 - t) * x[i] + t * y[i]
+    end
+    return c
+end
+
+local function createSkyMixEdit(parent, text, tip)
+    local value = this.skylightScatterMix
+
+    local label = parent:createLabel{ text = text }
+    label.borderTop = 6
+    label.borderBottom = 2
+    label:register("help", function(e)
+        local tooltip = tes3ui.createTooltipMenu()
+        tooltip:createLabel{ text = tip }
+    end)
+
+    local textColour = { 0.96, 0.96, 0.96 }
+    local editBlock = parent:createBlock{ id = this.id_swatches }
+    editBlock.flowDirection = "left_to_right"
+    editBlock.widthProportional = 1
+    editBlock.height = 45
+    editBlock.borderLeft = 35
+
+
+    local swatchSky = editBlock:createRect{}
+    swatchSky.width = 70
+    swatchSky.heightProportional = 1
+    label = swatchSky:createLabel{ text = "Sky" }
+    label.absolutePosAlignX = 0.5
+    label.color = textColour
+
+    local swatchSkylight = editBlock:createRect{}
+    swatchSkylight.width = 70
+    swatchSkylight.heightProportional = 1
+    label = swatchSkylight:createLabel{ text = "Skylight" }
+    label.absolutePosAlignX = 0.5
+    label.color = textColour
+
+    local swatchMixed = editBlock:createRect{}
+    swatchMixed.width = 70
+    swatchMixed.heightProportional = 1
+    label = swatchMixed:createLabel{ text = "Mixed" }
+    label.absolutePosAlignX = 0.5
+    label.color = textColour
+
+    local s = editBlock:createSlider{ current = value * 1000, min = 0, max = 1000, step = 10, jump = 50 }
+    s.width = 175
+    s.borderLeft = 15
+    s.borderRight = 20
+    s.borderTop = 4
+
+    local updateSwatches = function()
+        local currentSkyColour = tes3.worldController.weatherController.currentSkyColor
+        currentSkyColour = { currentSkyColour.r, currentSkyColour.g, currentSkyColour.b }
+        swatchSky.color = currentSkyColour
+        swatchSkylight.color = this.skylightScatter
+        swatchMixed.color = lerpSwatchColours(currentSkyColour, this.skylightScatter, this.skylightScatterMix)
+    end
+    
+    updateSwatches()
+    editBlock:register("update", updateSwatches)
+    s:register("PartScrollBar_changed", function(e)
+        table.insert(this.undoStack, currentWeatherToPreset())
+
+        value = e.source.widget.current / 1000
+        this.skylightScatterMix = value
+
+        updateSwatches()
+        updateScattering()
+    end)
+end
 
 local function createTextureAdjuster(parent)
     local wc = tes3.worldController.weatherController
@@ -726,6 +805,7 @@ local function changeAdjuster(e)
         createLChEdit(block, "Atmosphere Outscatter  [?]", outscatterTip, 2, this.outscatterInv, true)
         createLChEdit(block, "Atmosphere Inscatter  [?]", inscatterTip, 3, this.inscatterInv, true)
         createLChEdit(block, "Atmosphere Skylight  [?]", skylightTip, 4, this.skylightScatterCol, true)
+        createSkyMixEdit(block, "Sky Colour / Skylight Mix  [?]", skylightTip)
     elseif (e.option == 6) then
         createTextureAdjuster(block)
     end
@@ -1181,7 +1261,7 @@ local function createAdjuster()
     local menu = tes3ui.createMenu{ id = this.id_menu, dragFrame = true }
     menu.text = "Weather Adjuster"
     menu.width = 470
-    menu.height = 680
+    menu.height = 750
     if (this.menuX) then
         menu.positionX = this.menuX
         menu.positionY = this.menuY
@@ -1375,6 +1455,7 @@ local function init()
     this.id_weatherName = tes3ui.registerID("Hrn:WeatherAdjust.WeatherName")
     this.id_modes = tes3ui.registerID("Hrn:WeatherAdjust.Modes")
     this.id_colourBlock = tes3ui.registerID("Hrn:WeatherAdjust.ColourBlock")
+    this.id_swatches = tes3ui.registerID("Hrn:WeatherAdjust.Swatches")
 
     this.activePreset = "default"
     captureDefaultScattering()
