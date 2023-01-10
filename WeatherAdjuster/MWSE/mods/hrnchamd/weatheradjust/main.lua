@@ -960,16 +960,20 @@ local function createTabEditor()
 
     local wname = timeBlock:createLabel{ id = this.id_weatherName }
     wname.minWidth = 160
+
+    -- Time shift 30 mins, or 5 mins with Shift held
     local timeBack30 = timeBlock:createButton{ text = "-30 min" }
     timeBack30.borderLeft = 30
     timeBack30:register(tes3.uiEvent.mouseClick, function(e)
-        tes3.worldController.hour.value = (tes3.worldController.hour.value - 0.5) % 24
+        local timeChange = isShiftPressed() and 0.08333 or 0.5
+        tes3.worldController.hour.value = (tes3.worldController.hour.value - timeChange) % 24
         tes3.worldController.weatherController:updateVisuals()
         refreshEditor()
     end)
     local timeFwd30 = timeBlock:createButton{ text = "+30 min" }
     timeFwd30:register(tes3.uiEvent.mouseClick, function(e)
-        tes3.worldController.hour.value = (tes3.worldController.hour.value + 0.5) % 24
+        local timeChange = isShiftPressed() and 0.08333 or 0.5
+        tes3.worldController.hour.value = (tes3.worldController.hour.value + timeChange) % 24
         tes3.worldController.weatherController:updateVisuals()
         refreshEditor()
     end)
