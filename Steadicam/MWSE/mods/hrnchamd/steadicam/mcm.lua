@@ -5,6 +5,7 @@
 ]]--
 
 local this = {}
+local i18n = mwse.loadTranslations("hrnchamd.steadicam")
 
 local versionString = "v1.0"
 local configPath = "Steadicam"
@@ -77,7 +78,7 @@ function this.registerModConfig()
 			block:getTopLevelMenu():updateLayout()
 		end,
 		sidebarComponents = {
-			mwse.mcm.createInfo{ text = "Hover over a control for a help tip." },
+			mwse.mcm.createInfo{ text = i18n("DefaultHelp") },
 		},
 		components = {
 			{
@@ -87,7 +88,7 @@ function this.registerModConfig()
 			},
 			{
 				class = "Category",
-				label = "Presets",
+				label = i18n("CategoryPresets"),
 				postCreate = function(self)
 					local container = self.elements.subcomponentsContainer
 					container.flowDirection = tes3.flowDirection.leftToRight
@@ -97,8 +98,8 @@ function this.registerModConfig()
 				components = {
 					{
 						class = "Button",
-						buttonText = "Default",
-						description = "Reset settings to default.",
+						buttonText = i18n("PresetDefault"),
+						description = i18n("PresetDefaultHelp"),
 						callback = function(self)
 							table.copy(presets.default, this.config)
 							refreshPage()
@@ -106,8 +107,8 @@ function this.registerModConfig()
 					},
 					{
 						class = "Button",
-						buttonText = "Close",
-						description = "Set camera to follow the mouse more closely than the default preset.",
+						buttonText = i18n("PresetClose"),
+						description = i18n("PresetCloseHelp"),
 						callback = function(self)
 							table.copy(presets.close, this.config)
 							refreshPage()
@@ -115,8 +116,8 @@ function this.registerModConfig()
 					},
 					{
 						class = "Button",
-						buttonText = "Smooth",
-						description = "Set camera to follow the mouse more smoothly than the default preset.",
+						buttonText = i18n("PresetSmooth"),
+						description = i18n("PresetSmoothHelp"),
 						callback = function(self)
 							table.copy(presets.smooth, this.config)
 							refreshPage()
@@ -124,8 +125,8 @@ function this.registerModConfig()
 					},
 					{
 						class = "Button",
-						buttonText = "Loose",
-						description = "Set camera to swoop around like a drunk migratory bird.",
+						buttonText = i18n("PresetLoose"),
+						description = i18n("PresetLooseHelp"),
 						callback = function(self)
 							table.copy(presets.loose, this.config)
 							refreshPage()
@@ -136,26 +137,26 @@ function this.registerModConfig()
 
 			{
 				class = "Category",
-				label = "Camera angle",
+				label = i18n("CategoryCameraAngle"),
 				components = {
 					{
 						class = "Slider",
-						label = "First person smoothness",
-						description = "The smoothness of the first person view when looking around.",
+						label = i18n("1PSmoothness"),
+						description = i18n("1PSmoothnessHelp"),
 						min = 1, max = 250, step = 1, jump = 5,
 						variable = mwse.mcm:createTableVariable{ id = "firstPersonLookDamping", table = this.config }
 					},
 					{
 						class = "Slider",
-						label = "First person free-look smoothness",
-						description = "The smoothness of the first person view when looking around.",
+						label = i18n("1PFreelookSmoothness"),
+						description = i18n("1PFreelookSmoothnessHelp"),
 						min = 1, max = 250, step = 1, jump = 10,
 						variable = mwse.mcm:createTableVariable{ id = "freeLookDamping", table = this.config }
 					},
 					{
 						class = "Slider",
-						label = "Third person smoothness",
-						description = "The smoothness of the third person view when looking around.",
+						label = i18n("3PSmoothness"),
+						description = i18n("3PSmoothnessHelp"),
 						min = 1, max = 1000, step = 1, jump = 10,
 						variable = mwse.mcm:createTableVariable{ id = "thirdPersonLookDamping", table = this.config }
 					}
@@ -164,12 +165,12 @@ function this.registerModConfig()
 
 			{
 				class = "Category",
-				label = "Camera following",
+				label = i18n("CategoryCameraTracking"),
 				components = {
 					{
 						class = "Slider",
-						label = "Third person motion smoothness",
-						description = "The smoothness of the position of the third person camera as it follows the player. Higher smoothness will make the camera lag behind when the player is moving quickly.",
+						label = i18n("3PMotionSmoothness"),
+						description = i18n("3PMotionSmoothnessHelp"),
 						min = 1, max = 250, step = 1, jump = 5,
 						variable = mwse.mcm:createTableVariable{ id = "thirdPersonFollowDamping", table = this.config }
 					}
@@ -178,18 +179,18 @@ function this.registerModConfig()
 
 			{
 				class = "Category",
-				label = "Body",
+				label = i18n("CategoryBody"),
 				components = {
 					{
 						class = "OnOffButton",
-						label = "Body inertia",
-						description = "In first person view, controls if the player's body and arms has added inertia. They will take a short time to react to camera changes.",
+						label = i18n("BodyInertiaToggle"),
+						description = i18n("BodyInertiaToggleHelp"),
 						variable = mwse.mcm:createTableVariable{ id = "bodyInertia", table = this.config }
 					},
 					{
 						class = "Slider",
-						label = "Body inertia smoothness",
-						description = "The reaction time of the body and arms to changes in look direction.",
+						label = i18n("BodyInertiaSmoothness"),
+						description = i18n("BodyInertiaSmoothnessHelp"),
 						min = 10, max = 100, step = 1, jump = 5,
 						variable = mwse.mcm:createTableVariable{ id = "bodyInertiaDamping", table = this.config }
 					}
@@ -198,12 +199,12 @@ function this.registerModConfig()
 
 			{
 				class = "Category",
-				label = "Controls",
+				label = i18n("CategoryControls"),
 				components = {
 					{
 						class = "KeyBinder",
-						label = "Toggle free look key",
-						description = "Press to toggle free look mode. The mouse will control the camera without changing movement direction. Works in both first and third person.",
+						label = i18n("KeybindToggleFreeLook"),
+						description = i18n("KeybindToggleFreeLookHelp"),
 						paddingBottom = 10,
 						min = 1, max = 250, step = 1, jump = 5,
 						variable = mwse.mcm:createTableVariable{
@@ -214,8 +215,8 @@ function this.registerModConfig()
 					},
 					{
 						class = "Slider",
-						label = "Horizontal mouse sensitivity",
-						description = "A finer control of the game's mouse sensitivity.",
+						label = i18n("MouseHSensitivity"),
+						description = i18n("MouseHSensitivityHelp"),
 						min = 1, max = 500, step = 1, jump = 5,
 						variable = mwse.mcm:createTableVariable{ id = "proxySensitivityX", table = this },
 						callback = function(e)
@@ -225,8 +226,8 @@ function this.registerModConfig()
 					},
 					{
 						class = "Slider",
-						label = "Vertical mouse sensitivity",
-						description = "A finer control of the game's mouse sensitivity.",
+						label = i18n("MouseVSensitivity"),
+						description = i18n("MouseVSensitivityHelp"),
 						min = 1, max = 500, step = 1, jump = 5,
 						variable = mwse.mcm:createTableVariable{ id = "proxySensitivityY", table = this },
 						callback = function(e)
