@@ -105,7 +105,10 @@ local function steadicam(e)
 		-- This removes jitter from the unsmoothed movement controller
 		local armRotation = e.armCameraTransform.rotation:copy()
 		local proceduralRot = (firstPersonNode.rotation:transpose() * armRotation):transpose()
-		firstPersonNode.rotation = m * proceduralRot
+
+		if tes3.mobilePlayer.hasFreeAction then
+			firstPersonNode.rotation = m * proceduralRot
+		end
 
 		-- Arms smoothing modes
 		if this.saved1stPersonRotation then
