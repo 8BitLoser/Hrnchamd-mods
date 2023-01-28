@@ -13,7 +13,7 @@ local configDefault = {
 	configVersion = 1,
 
 	bodyInertia = true,
-	bodyInertiaDamping = 25,
+	bodyInertiaDamping = 20,
 
 	freeLookKeybind	= {
 		keyCode = tes3.scanCode.n,
@@ -25,19 +25,19 @@ local configDefault = {
 
 local presets = {
 	default = {
-		firstPersonLookDamping = 4,
-		freeLookDamping = 80,
+		firstPersonLookDamping = 10,
+		freeLookDamping = 60,
 		thirdPersonLookDamping = 250,
-		thirdPersonFollowDamping = 143
+		thirdPersonFollowDamping = 140
 	},
 	close = {
 		firstPersonLookDamping = 2,
-		freeLookDamping = 20,
+		freeLookDamping = 15,
 		thirdPersonLookDamping = 50,
-		thirdPersonFollowDamping = 83
+		thirdPersonFollowDamping = 80
 	},
 	smooth = {
-		firstPersonLookDamping = 15,
+		firstPersonLookDamping = 30,
 		freeLookDamping = 150,
 		thirdPersonLookDamping = 450,
 		thirdPersonFollowDamping = 200
@@ -45,8 +45,8 @@ local presets = {
 	loose = {
 		firstPersonLookDamping = 120,
 		freeLookDamping = 250,
-		thirdPersonLookDamping = 2500,
-		thirdPersonFollowDamping = 250
+		thirdPersonLookDamping = 1000,
+		thirdPersonFollowDamping = 300
 	}
 }
 
@@ -171,7 +171,7 @@ function this.registerModConfig()
 						class = "Slider",
 						label = i18n("3PMotionSmoothness"),
 						description = i18n("3PMotionSmoothnessHelp"),
-						min = 1, max = 250, step = 1, jump = 5,
+						min = 1, max = 400, step = 1, jump = 10,
 						variable = mwse.mcm:createTableVariable{ id = "thirdPersonFollowDamping", table = this.config }
 					}
 				}

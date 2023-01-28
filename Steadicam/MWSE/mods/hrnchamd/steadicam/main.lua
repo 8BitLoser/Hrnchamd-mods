@@ -71,7 +71,7 @@ local function steadicam(e)
 
 	-- Camera rotation smoothing
 	local k = getRotationDampingTerm(animController, dt)
-	local delta_angle = getQuatAngleDifference(r_prev, r)
+	local delta_angle = getQuatAngleDifference(r_prev, r) + 1e-3
 	local speed = k * delta_angle * delta_angle
 	speed = math.max(0.01, speed)
 
@@ -122,7 +122,7 @@ local function steadicam(e)
 			this.saved1stPersonRotation = m
 
 			-- Cancel smoothing on convergence
-			if speed_arms < 0.001 and delta_angle < 0.0025 then
+			if speed_arms < 0.001 and delta_angle < 0.003 then
 				this.saved1stPersonRotation = nil
 			end
 		elseif config.bodyInertia then
