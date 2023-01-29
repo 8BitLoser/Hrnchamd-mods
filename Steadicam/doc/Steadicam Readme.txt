@@ -1,7 +1,7 @@
 
-Steadicam 1.0
+Steadicam 1.1
 --------------
-by Hrnchamd, released 2023-01-28
+by Hrnchamd, released 2023-01-29
 
 
 Summary
@@ -32,3 +32,11 @@ Usage
 The default free-look key is 'N'. Try it out.
 
 By default the body inertia feature is enabled. See the Steadicam config in the Mod Config menu for access to all settings.
+
+
+Changelog
+---------
+
+1.1
+- Add 'Steadicam enable' feature to config menu.
+- Fix body inertia briefly glitching after exiting free-look mode while moving.

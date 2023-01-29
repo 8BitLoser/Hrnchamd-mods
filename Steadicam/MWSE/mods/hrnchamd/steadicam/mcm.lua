@@ -1,13 +1,14 @@
 --[[
 	Mod: Steadicam
 	Author: Hrnchamd
-	Version: 1.0
+	Version: 1.1
 ]]--
 
 local this = {}
 local i18n = mwse.loadTranslations("hrnchamd.steadicam")
 
-local versionString = "v1.0"
+local versionString = "v1.1"
+
 local configPath = "Steadicam"
 local configDefault = {
 	configVersion = 1,
