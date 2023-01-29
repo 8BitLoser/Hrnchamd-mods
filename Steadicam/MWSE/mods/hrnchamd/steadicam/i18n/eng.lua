@@ -1,5 +1,14 @@
+--[[
+	Mod: Steadicam
+	Author: Hrnchamd
+	Version: 1.0
+]]--
+
 return {
 	["DefaultHelp"] = "Hover over a control for a help tip.",
+
+	["ModEnableToggle"] = "Steadicam enable",
+	["ModEnableToggleHelp"] = "Switches all camera control features on or off.",
 	
 	["CategoryPresets"] = "Presets",
 	["PresetDefault"] = "Default",

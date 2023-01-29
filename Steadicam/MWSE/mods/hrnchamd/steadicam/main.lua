@@ -47,6 +47,7 @@ end
 
 local function steadicam(e)
 	-- Ignore vanity camera
+	if not config.enabled then return end
 	if e.animationController.vanityCamera then
 		return
 	end
@@ -169,6 +170,7 @@ end
 
 local function keyEvent(e)
 	if tes3.menuMode() then return end
+	if not config.enabled then return end
 
 	if tes3.isKeyEqual{expected = config.freeLookKeybind, actual = e} then
 		freeLookToggle()

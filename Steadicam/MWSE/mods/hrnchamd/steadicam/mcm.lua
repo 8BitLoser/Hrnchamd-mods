@@ -11,6 +11,7 @@ local versionString = "v1.0"
 local configPath = "Steadicam"
 local configDefault = {
 	configVersion = 1,
+	enabled = true,
 
 	bodyInertia = true,
 	bodyInertiaDamping = 20,
@@ -83,8 +84,19 @@ function this.registerModConfig()
 		components = {
 			{
 				class = "Info",
-				label = "Steadicam " .. versionString,
-				paddingBottom = 10
+				label = "Steadicam " .. versionString
+			},
+			{
+				class = "Category",
+				label = i18n("ModEnableToggle"),
+				components = {
+					{
+						class = "OnOffButton",
+						label = "",
+						description = i18n("ModEnableToggleHelp"),
+						variable = mwse.mcm:createTableVariable{ id = "enabled", table = this.config }
+					}
+				}
 			},
 			{
 				class = "Category",
