@@ -124,6 +124,7 @@ local function steadicam(e)
 			-- Cancel smoothing on convergence
 			if speed_arms < 0.001 and delta_angle < 0.003 then
 				this.saved1stPersonRotation = nil
+				this.lastBodyInertiaRotation = m:copy()
 			end
 		elseif config.bodyInertia then
 			-- Body inertia converges on calculated rotation
@@ -157,8 +158,9 @@ local function freeLookToggle()
 		this.savedCameraRelativePosition = tes3.worldController.worldCamera.cameraRoot.translation - tes3.player.position
 		this.freeLookRotateZ = 0
 
-		-- Cancel damping
+		-- Cancel transition state and body inertia
 		this.freeLookResetDamping = nil
+		this.lastBodyInertiaRotation = nil
 	else
 		-- Transition back to forward look with initial heavy damping
 		this.freeLookResetDamping = 10000
