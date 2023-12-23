@@ -1,0 +1,2 @@
+PLAYER: scripts/PerfectPlacement/player.lua
+GLOBAL: scripts/PerfectPlacement/global.lua
