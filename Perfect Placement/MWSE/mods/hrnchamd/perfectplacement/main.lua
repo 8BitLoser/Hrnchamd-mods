@@ -291,7 +291,7 @@ local function simulatePlacement(e)
     local orient = this.orientation:copy()
     if (this.snapMode) then
         local quantizer = (0.5 / config.snapN) * math.pi
-        if (this.verticalMode == 0 or this.wallAlign) then
+        if (this.verticalMode == 0 or this.wallMount) then
             orient.z = quantizer * math.floor(0.5 + orient.z / quantizer)
         else
             orient.y = quantizer * math.floor(0.5 + orient.y / quantizer)
@@ -512,7 +512,6 @@ local function onConfigUpdate()
 end
 
 local function onInitialized(mod)
-    local w = tes3.worldController.weatherController
     this.shadow_model = tes3.loadMesh("hrn/shadow.nif")
 
     this.id_guide = tes3ui.registerID("ObjectPlacement:GuideMenu")
