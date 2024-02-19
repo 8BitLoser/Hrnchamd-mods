@@ -218,8 +218,9 @@ local function activatePlacement()
             return
         end
         -- Ownership test.
-        if (target.ownerRecordId or target.ownerFactionId) then
-            if (target.ownerFactionId and types.NPC.getFactionRank(player, target.ownerFactionId) >= target.ownerFactionRank and not types.NPC.isExpelled(player, target.ownerFactionId)) then
+		local owner = target.owner
+        if (owner.recordId or owner.factionId) then
+            if (owner.factionId and types.NPC.getFactionRank(player, owner.factionId) >= owner.factionRank and not types.NPC.isExpelled(player, owner.factionId)) then
                 -- Player has sufficient faction rank.
             else
                 ui.showMessage(l10n("OwnedItem"))
