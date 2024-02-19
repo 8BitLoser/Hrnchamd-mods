@@ -184,15 +184,6 @@ local function finalPlacement()
     endPlacement()
 end
 
--- onInputAction event while holding an item.
-local function onInputAction(id)
-    -- Prevent player from activating anything.
-	if this.active and id == input.ACTION.Activate then
-		--Doesn't work.
-		--#return false
-	end
-end
-
 -- Copy orientation event handler.
 local function copyLastOri()
     if (this.matchTimer and this.lastItemOri) then
@@ -231,13 +222,9 @@ local function activatePlacement(e)
         end
 
         -- Put those hands away.
-		--[[
-        if (tes3.mobilePlayer.weaponReady) then
-            tes3.mobilePlayer.weaponReady = false
-        elseif (tes3.mobilePlayer.castReady) then
-            tes3.mobilePlayer.castReady = false
-        end
-		]]--
+		if types.Actor.getStance(player) ~= types.Actor.STANCE.Nothing then
+			types.Actor.setStance(player, types.Actor.STANCE.Nothing)
+		end
 
         -- Calculate effective bounds including scale.
 		local orientation = transformToAngles(target.rotation)
@@ -504,7 +491,6 @@ return {
         onKeyPress = modeKeyDown,
 		onKeyRelease = modeKeyUp,
 		onLoad = onLoad,
-		onInputAction = onInputAction,
 		onFrame = onFrame,
     }
 }
