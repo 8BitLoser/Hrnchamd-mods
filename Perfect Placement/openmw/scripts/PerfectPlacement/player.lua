@@ -18,7 +18,7 @@ local util = require('openmw.util')
 local itemSound = require('scripts.PerfectPlacement.itemSound')
 local gui = require('scripts.PerfectPlacement.gui')
 local orientModule = require('scripts.PerfectPlacement.orient')
-local config = require('scripts.PerfectPlacement.settings')
+local config = require('scripts.PerfectPlacement.config')
 local l10n = core.l10n('PerfectPlacement')
 
 local this = {
@@ -81,6 +81,14 @@ local function showAngles(prefix, a)
 	ui.showMessage(string.format("%s X %.2f Y %.2f Z %.2f", prefix, a.x, a.y, a.z))
 end
 
+local function cancelableTimer(delay, func)
+	local data = {}
+	async:newUnsavableSimulationTimer(delay, function()
+		if not data.cancel then func() end
+	end)
+	return data
+end
+
 local function cancelPlayerTurning()
 	player.controls.yawChange = 0
 	player.controls.pitchChange = 0
@@ -115,7 +123,7 @@ local function setVerticalMode(n)
         this.height = this.boundMax.x
     end
 
-    this.newPosition = this.active.position + util.vector3(0, 0, this.height - prevHeight)
+    this.newPosition = this.activeObj.position + util.vector3(0, 0, this.height - prevHeight)
 	this.newRotation = transformFromAngles(this.orientation)
 	core.sendGlobalEvent("PerfectPlacement:Move", this)
 end
@@ -147,7 +155,7 @@ end
 -- Called to confirm final placement, drops item to ground if not attaching to wall.
 local function finalPlacement()
 	-- Read back possibly quantized rotation.
-	this.orientation = transformToAngles(this.active.rotation)
+	this.orientation = transformToAngles(this.activeObj.rotation)
     this.lastItemOri = this.orientation
 
     if (not this.wallMount and not this.rotateMode) then
@@ -155,38 +163,36 @@ local function finalPlacement()
         matchVerticalMode(this.orientation, this.boundMin, this.boundMax)
 
         -- Drop to ground.
-        --#this.active.sceneNode.appCulled = true
-        local from = this.active.position + util.vector3(0, 0, -this.height + const_epsilon)
+        local from = this.activeObj.position + util.vector3(0, 0, -this.height + const_epsilon)
 		local to = from + util.vector3(0, 0, -4096)
-        local ray = nearby.castRenderingRay(from, to)
-        --#this.active.sceneNode.appCulled = false
+        local ray = nearby.castRenderingRay(from, to, { ignore = this.activeObj })
 
         if (ray.hit) then
             if (this.verticalMode == 0 and this.groundAlign and not this.freezeAlign) then
-                this.orientation = orientModule.orientRef(this.active, this.orientation, ray)
+                this.orientation = orientModule.orientRef(this.activeObj, this.orientation, ray)
             end
 
-			-- Buffer data because `this` will be reset in endPlacement().
+			-- Global event data to send.
 			local data = {
-				active = this.active,
+				activeObj = this.activeObj,
 				newPosition = ray.hitPos + util.vector3(0, 0, this.height + const_epsilon),
 				newRotation = transformFromAngles(this.orientation)
 			}
 			--showAngles("drop before", this.orientation)
 			--showAngles("drop after", transformToAngles(data.newRotation))
 	
-			-- Send a different event to avoid multiple item teleports in the same frame.
+			-- Place object at final position.
 			core.sendGlobalEvent("PerfectPlacement:Drop", data)
         end
-    end
+	end
     
-	core.sound.playSound3d(itemSound.getDropSound(this.active), this.active)
+	core.sound.playSound3d(itemSound.getDropSound(this.activeObj), this.activeObj)
     endPlacement()
 end
 
 -- Copy orientation event handler.
 local function copyLastOri()
-    if (this.matchTimer and this.lastItemOri) then
+    if (this.lastItemOri) then
         this.orientation = mutableVec3(this.lastItemOri)
         this.freezeAlign = true
         matchVerticalMode(this.orientation, this.boundMin, this.boundMax)
@@ -194,7 +200,7 @@ local function copyLastOri()
 end
 
 -- On grabbing / dropping an item.
-local function activatePlacement(e)
+local function activatePlacement()
     local targetRay = castActivationRay()
 	local target = targetRay.hitObject
 
@@ -203,7 +209,7 @@ local function activatePlacement(e)
         return
     end
     
-    if (this.active) then
+    if (this.activeObj) then
         -- Drop item.
         finalPlacement()
     elseif (target) then
@@ -244,7 +250,7 @@ local function activatePlacement(e)
             local attachPos = util.vector3(basePos.x + -this.boundMin.z * attachRay.x, basePos.y + -this.boundMin.z * attachRay.y, basePos.z)
 			local from = attachPos + attachRay * -0.5
 			local to = attachPos + attachRay * 0.5
-            local wallRay = nearby.castRay(from, to, {ignore = target})
+            local wallRay = nearby.castRenderingRay(from, to, { ignore = target })
 
             if (wallRay.hit) then
                 -- Adjust basePos to be on the model edge that is touching the wall.
@@ -261,8 +267,8 @@ local function activatePlacement(e)
         this.orientation = orientation
         this.freezeAlign = false
 
-        this.active = target
-		core.sound.playSound3d(itemSound.getPickupSound(this.active), this.active)
+        this.activeObj = target
+		core.sound.playSound3d(itemSound.getPickupSound(this.activeObj), this.activeObj)
 		core.sendGlobalEvent("PerfectPlacement:Begin", this)
         --#tes3ui.suppressTooltip(true)
         
@@ -275,14 +281,14 @@ end
 -- Called every simulation frame to reposition the item.
 local function onFrame(deltaTime)
 	if core.isWorldPaused() then return end
-	if not this.active then return end
+	if not this.activeObj then return end
 	
     -- Stop if player takes the object.
-    if (not this.active.cell) then
+    if (not this.activeObj.cell) then
         endPlacement()
         return
     -- Check for cell change.
-    elseif (not this.active.cell:isInSameSpace(player)) then
+    elseif (not this.activeObj.cell:isInSameSpace(player)) then
         ui.showMessage(l10n("CannotMoveBetweenCells"))
         endPlacementWithReset()
         return
@@ -293,10 +299,9 @@ local function onFrame(deltaTime)
     end
 
     -- Cast ray along initial pickup direction rotated by the 1st person camera.
-    --#this.active.sceneNode.appCulled = true
     local eye = camera.getPosition()
     local rayDir = camera.getViewTransform():inverse() * this.rayDir - eye
-    local ray = nearby.castRay(eye, eye + rayDir:normalize() * 800, {ignore = this.active})
+    local ray = nearby.castRenderingRay(eye, eye + rayDir:normalize() * 800, { ignore = this.activeObj })
 	local hitT = ray.hit and (ray.hitPos - eye):length() / rayDir:length()
     
     -- Limit holding distance to a maxReach * initial distance.
@@ -316,7 +321,7 @@ local function onFrame(deltaTime)
             -- Ground mode. Check if item is directly touching something.
             if (ray.hit and hitT <= this.maxReach and this.groundAlign) then
                 -- Orient item to match placement.
-                this.orientation = orientModule.orientRef(this.active, this.orientation, ray)
+                this.orientation = orientModule.orientRef(this.activeObj, this.orientation, ray)
             else
                 -- Remove any tilt rotation, in an animated manner.
                 local ease = math.max(0.5, 1 - 20 * deltaTime)
@@ -335,10 +340,10 @@ local function onFrame(deltaTime)
         local clearance = math.max(2, -this.boundMin.z)
         rayDir = util.vector3(clearance * math.sin(this.orientation.y), clearance * math.cos(this.orientation.y), 0)
 		local from = pos + rayDir * -const_epsilon
-        ray = nearby.castRay(from, from + rayDir * 2, {ignore = this.active})
-		hitDistance = ray.hit and (ray.hitPos - from):length()
+        ray = nearby.castRenderingRay(from, from + rayDir * 2, { ignore = this.activeObj })
+		hitT = ray.hit and (ray.hitPos - from):length() / clearance
         
-        if (ray.hit and hitDistance < 1) then
+        if (ray.hit and hitT < 1) then
             -- Place at minimum distance outside wall, and optionally align rotation with normal.
             pos = ray.hitPos - rayDir
             if (this.wallAlign and math.abs(ray.hitNormal.z) < 0.2) then
@@ -351,7 +356,7 @@ local function onFrame(deltaTime)
     -- Find drop position for shadow spot.
 	--[[
     local dropPos = pos
-    ray = nearby.castRenderingRay(pos, pos + util.vector3(0, 0, -2048))
+    ray = nearby.castRenderingRay(pos, pos + util.vector3(0, 0, -2048), { ignore = this.activeObj })
     if (ray.hit) then
         dropPos = ray.hitPos
     end
@@ -388,7 +393,7 @@ local function onFrame(deltaTime)
     -- Rotation snap.
     local orient = mutableVec3(this.orientation)
     if (this.snapMode) then
-        local quantizer = (0.5 / config.options.snapN) * math.pi
+        local quantizer = config.options.snapQuantizer
         if (this.verticalMode == 0 or this.wallMount) then
             orient.z = quantizer * math.floor(0.5 + orient.z / quantizer)
         else
@@ -397,7 +402,6 @@ local function onFrame(deltaTime)
     end
 
     -- Update item.
-    --#this.active.sceneNode.appCulled = false
 	this.newPosition = pos
 	this.newRotation = transformFromAngles(orient)
 	core.sendGlobalEvent("PerfectPlacement:Move", this)
@@ -405,9 +409,10 @@ end
 
 -- Clean up placement.
 endPlacement = function()
-    if (this.matchTimer) then
-        this.matchTimer = nil
-    end
+	if (this.verticalHoldTimer) then
+		this.verticalHoldTimer.cancel = true
+		this.verticalHoldTimer = nil
+	end
     
 	core.sendGlobalEvent("PerfectPlacement:End", this)
     --#tes3ui.suppressTooltip(false)
@@ -415,7 +420,7 @@ endPlacement = function()
     -- this.snapMode is persistent
     -- this.groundAlign is persistent
     -- this.wallAlign is persistent
-    this.active = nil
+    this.activeObj = nil
     this.rotateMode = nil
     this.verticalMode = 0
     
@@ -423,73 +428,121 @@ endPlacement = function()
 end
 
 endPlacementWithReset = function ()
-	-- Buffer data because `this` will be reset in endPlacement().
+	-- Global event data to send.
 	local data = {
-		active = this.active,
+		activeObj = this.activeObj,
 		newPosition = this.itemInitialPos,
 		newRotation = this.itemInitialRot
 	}
-	-- Send a different event to avoid multiple item teleports in the same frame.
+	-- Restore original item position.
 	core.sendGlobalEvent("PerfectPlacement:Drop", data)
 
 	endPlacement()
 end
 
--- End placement on load game. this.active would be invalid after load.
+-- End placement on load game. this.activeObj would be invalid after load.
 local function onLoad(e)
-    if (this.active) then
+    if (this.activeObj) then
         endPlacement()
     end
 end
 
-local function modeKeyDown(e)
-   if (e.code == config.keybinds.keybind) then
-        activatePlacement(e)
-    elseif (this.active) then
-        if (e.code == config.keybinds.keybindRotate) then
-            this.rotateMode = true
-        elseif (e.code == config.keybinds.keybindSnap) then
-            this.snapMode = not this.snapMode
-        elseif (e.code == config.keybinds.keybindVertical) then
-            async:newUnsavableSimulationTimer(this.holdKeyTime, copyLastOri)
-			this.matchTimer = true
+-- Input
 
-            if (this.verticalMode == 0) then
-                this.verticalMode = 1
-                setVerticalMode(this.verticalMode)
-            else
-				this.orientation.x = 0
-				this.orientation.y = 0
-                this.orientation.z = transformToAngles(player.rotation).z
-                this.height = -this.boundMin.z
-                this.verticalMode = 0
-            end
-        elseif (e.code == config.keybinds.keybindWallAlign) then
-            if (this.verticalMode == 0) then
-                this.groundAlign = not this.groundAlign
-            else
-                this.wallAlign = not this.wallAlign
-            end
-        end
+function registerTrigger(key, name)
+	input.registerTrigger({ key = key, l10n = 'PerfectPlacement', name = name, description = name })
+end
+
+registerTrigger('PerfectPlacement/Place', 'GrabDropItem')
+registerTrigger('PerfectPlacement/RotateMode', 'RotateItem')
+registerTrigger('PerfectPlacement/SnapMode', 'SnapRotation')
+registerTrigger('PerfectPlacement/VerticalMode', 'VerticalMode')
+registerTrigger('PerfectPlacement/SurfaceAlignMode', 'OrientToSurface')
+registerTrigger('PerfectPlacement/RotateMode/Release', 'RotateItem')
+registerTrigger('PerfectPlacement/VerticalMode/Release', 'VerticalMode')
+
+input.registerTriggerHandler('PerfectPlacement/Place', async:callback(activatePlacement))
+input.registerTriggerHandler('PerfectPlacement/RotateMode', async:callback(function()
+	if (not this.activeObj) then return end
+
+	this.rotateMode = true
+end))
+input.registerTriggerHandler('PerfectPlacement/SnapMode', async:callback(function()
+	if (not this.activeObj) then return end
+
+	this.snapMode = not this.snapMode
+end))
+input.registerTriggerHandler('PerfectPlacement/VerticalMode', async:callback(function()
+	if (not this.activeObj) then return end
+
+	this.verticalHoldTimer = cancelableTimer(this.holdKeyTime, copyLastOri)
+
+	if (this.verticalMode == 0) then
+		this.verticalMode = 1
+		setVerticalMode(this.verticalMode)
+	else
+		this.orientation.x = 0
+		this.orientation.y = 0
+		this.orientation.z = transformToAngles(player.rotation).z
+		this.height = -this.boundMin.z
+		this.verticalMode = 0
+	end
+end))
+input.registerTriggerHandler('PerfectPlacement/SurfaceAlignMode', async:callback(function()
+	if (not this.activeObj) then return end
+
+	if (this.verticalMode == 0) then
+		this.groundAlign = not this.groundAlign
+	else
+		this.wallAlign = not this.wallAlign
+	end
+end))
+input.registerTriggerHandler('PerfectPlacement/RotateMode/Release', async:callback(function()
+	if (not this.activeObj) then return end
+
+	this.rotateMode = false
+end))
+input.registerTriggerHandler('PerfectPlacement/VerticalMode/Release', async:callback(function()
+	if (not this.activeObj) then return end
+
+	if (this.verticalHoldTimer) then
+		this.verticalHoldTimer.cancel = true
+	end
+end))
+
+-- Manual dispatch here because access to the keybinds are required to display them/set defaults.
+local function onKeyPress(e)
+	local code, keybinds = e.code, config.keybinds
+
+	if (code == keybinds.keybindPlace) then
+		input.activateTrigger('PerfectPlacement/Place')
+    elseif (code == keybinds.keybindRotate) then
+		input.activateTrigger('PerfectPlacement/RotateMode')
+	elseif (code == keybinds.keybindSnap) then
+		input.activateTrigger('PerfectPlacement/SnapMode')
+    elseif (code == keybinds.keybindVertical) then
+		input.activateTrigger('PerfectPlacement/VerticalMode')
+	elseif (code == keybinds.keybindSurfaceAlign) then
+		input.activateTrigger('PerfectPlacement/SurfaceAlignMode')
     end
 end
 
-local function modeKeyUp(e)
-    if (this.active) then
-        if (e.code == config.keybinds.keybindVertical) then
-            this.matchTimer = nil
-        elseif (e.code == config.keybinds.keybindRotate) then
-            this.rotateMode = false
-        end
-    end
+local function onKeyRelease(e)
+	local code, keybinds = e.code, config.keybinds
+
+    if (code == keybinds.keybindRotate) then
+		input.activateTrigger('PerfectPlacement/RotateMode/Release')
+    elseif (code == keybinds.keybindVertical) then
+		input.activateTrigger('PerfectPlacement/VerticalMode/Release')
+	end
 end
 
 
 
 return {
     engineHandlers = {
-        onKeyPress = modeKeyDown,
-		onKeyRelease = modeKeyUp,
+		onKeyPress = onKeyPress,
+		onKeyRelease = onKeyRelease,
 		onLoad = onLoad,
 		onFrame = onFrame,
     }

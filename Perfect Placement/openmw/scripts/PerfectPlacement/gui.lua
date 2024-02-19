@@ -114,7 +114,7 @@ local function showGuide(config)
     setLine(1, l10n('RotateItem'), l10n('HoldPrefix'), config.keybindRotate)
     setLine(2, l10n('VerticalMode'), '', config.keybindVertical)
     setLine(3, l10n('MatchLast'), l10n('HoldPrefix'), config.keybindVertical)
-    setLine(4, l10n('OrientToSurface'), '', config.keybindWallAlign)
+    setLine(4, l10n('OrientToSurface'), '', config.keybindSurfaceAlign)
     setLine(5, l10n('SnapRotation'), '', config.keybindSnap)
     setLine(6, l10n('DropItem'), '', config.keybind)
 

@@ -8,15 +8,13 @@ local async = require('openmw.async')
 local core = require('openmw.core')
 local input = require('openmw.input')
 local I = require('openmw.interfaces')
-local storage = require('openmw.storage')
 local ui = require('openmw.ui')
-local util = require('openmw.util')
 
 local l10n = core.l10n('PerfectPlacement')
 local versionString = "2.2beta"
 
 -- inputKeySelection by Pharis
-I.Settings.registerRenderer('inputKeySelection', function(value, set)
+I.Settings.registerRenderer('PerfectPlacement/inputKeySelection', function(value, set)
 	local name = 'No Key Set'
 	if value then
 		name = input.getKeyName(value)
@@ -106,49 +104,34 @@ I.Settings.registerGroup {
     permanentStorage = true,
     settings = {
         {
-            key = 'keybind',
-            renderer = 'inputKeySelection',
+            key = 'keybindPlace',
+            renderer = 'PerfectPlacement/inputKeySelection',
             name = 'GrabDropItem',
             default = input.KEY.G,
         },
         {
             key = 'keybindRotate',
-            renderer = 'inputKeySelection',
+            renderer = 'PerfectPlacement/inputKeySelection',
             name = 'RotateItem',
             default = input.KEY.LeftShift,
         },
         {
             key = 'keybindVertical',
-            renderer = 'inputKeySelection',
+            renderer = 'PerfectPlacement/inputKeySelection',
             name = 'VerticalMode',
             default = input.KEY.LeftAlt,
         },
         {
-            key = 'keybindWallAlign',
-            renderer = 'inputKeySelection',
+            key = 'keybindSurfaceAlign',
+            renderer = 'PerfectPlacement/inputKeySelection',
             name = 'OrientToSurface',
             default = input.KEY.Slash,
         },
         {
             key = 'keybindSnap',
-            renderer = 'inputKeySelection',
+            renderer = 'PerfectPlacement/inputKeySelection',
             name = 'SnapRotation',
             default = input.KEY.RightShift,
         },
     },
 }
-
-local options = storage.playerSection('Settings/PerfectPlacement/Options')
-local keybinds = storage.playerSection('Settings/PerfectPlacement/Keybinds')
-local config = {}
-
-local function updateConfig()
-	config.options = options:asTable()
-	config.options.snapN = 90 / tonumber(config.options.snapN:sub(5))
-	config.keybinds = keybinds:asTable()
-end
-updateConfig()
-options:subscribe(async:callback(updateConfig))
-keybinds:subscribe(async:callback(updateConfig))
-
-return config

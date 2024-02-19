@@ -30,7 +30,7 @@ local function transformToAngles(t)
 	local fz = (util.transform.rotateY(-y) * util.transform.rotateX(-x)) * forward
 	z = math.atan2(fz.x, fz.y)
 
-	--z, y, x = t:getAnglesZYX() -- broken in dev
+	--z, y, x = t:getAnglesZYX() -- broken in 0.49 dev
 	return { x = x, y = y, z = z }
 end
 
