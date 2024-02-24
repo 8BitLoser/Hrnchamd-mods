@@ -217,6 +217,9 @@ local function activatePlacement()
         if (not placeableTypes[target.type]) then
             return
         end
+		if target.type == types.Light and not types.Light.record(target).isCarriable then
+			return
+		end
         -- Ownership test.
 		local owner = target.owner
         if (owner.recordId or owner.factionId) then
