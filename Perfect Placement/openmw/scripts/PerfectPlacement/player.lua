@@ -65,8 +65,14 @@ local function transformToAngles(t)
 	local up = t * util.vector3(0, 0, 1)
 	forward = forward:normalize()
 	up = up:normalize()
-	y = -math.asin(up.x)
-	x = math.atan2(up.y, up.z)
+
+	if math.abs(up.z) < 1e-5 then
+		x = -0.5 * math.pi
+		y = math.atan2(-up.x, -up.y)
+	else
+		x = math.atan2(up.y, up.z)
+		y = -math.asin(up.x)
+	end
 	local fz = (util.transform.rotateY(-y) * util.transform.rotateX(-x)) * forward
 	z = math.atan2(fz.x, fz.y)
 
@@ -78,7 +84,7 @@ local function transformFromAngles(t)
 end
 
 local function showAngles(prefix, a)
-	ui.showMessage(string.format("%s X %.2f Y %.2f Z %.2f", prefix, a.x, a.y, a.z))
+	ui.showMessage(string.format("%s X %0.3f Y %0.3f Z %0.3f", prefix, a.x, a.y, a.z))
 end
 
 local function cancelableTimer(delay, func)
@@ -105,21 +111,22 @@ local endPlacement, endPlacementWithReset -- local functions
 
 -- Set rotation frame and effective height for vertical modes.
 local function setVerticalMode(n)
+	local half_pi = 0.5 * math.pi
     local prevHeight = this.height
-    this.orientation.x = -0.5 * math.pi
+    this.orientation.x = -half_pi
     this.orientation.y = player.rotation:getYaw()
 	
     if (n == 1) then
         this.orientation.z = 0
         this.height = -this.boundMin.y
     elseif (n == 2) then
-        this.orientation.z = -0.5 * math.pi
+        this.orientation.z = -half_pi
         this.height = -this.boundMin.x
     elseif (n == 3) then
         this.orientation.z = math.pi
         this.height = this.boundMax.y
     elseif (n == 4) then
-        this.orientation.z = 0.5 * math.pi
+        this.orientation.z = half_pi
         this.height = this.boundMax.x
     end
 
@@ -408,6 +415,7 @@ local function onFrame(deltaTime)
     -- Update item.
 	this.newPosition = pos
 	this.newRotation = transformFromAngles(orient)
+	--showAngles("orient", orient)
 	core.sendGlobalEvent("PerfectPlacement:Move", this)
 end
 
