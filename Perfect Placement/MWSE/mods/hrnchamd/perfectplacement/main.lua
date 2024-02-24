@@ -104,28 +104,30 @@ local function showGuide()
     addLine(i18n("OrientToSurface"), "", config.keybindWallAlign)
     addLine(i18n("SnapRotation"), "", config.keybindSnap)
     addLine(i18n("DropItem"), "", config.keybind)
+    addLine(i18n("HangItem"), getKeybindName(config.keybindRotate) .. ' + ', config.keybind)
 
     menu:updateLayout()
 end
 
 -- Set rotation frame and effective height for vertical modes.
 local function setVerticalMode(n)
+	local half_pi = 0.5 * math.pi
     local prevHeight = this.height
     local orient = this.orientation
-    orient.x = -0.5 * math.pi
+    orient.x = -half_pi
     orient.y = tes3.player.orientation.z
 
     if (n == 1) then
         orient.z = 0
         this.height = -this.boundMin.y
     elseif (n == 2) then
-        orient.z = -0.5 * math.pi
+        orient.z = -half_pi
         this.height = -this.boundMin.x
     elseif (n == 3) then
         orient.z = math.pi
         this.height = this.boundMax.y
     elseif (n == 4) then
-        orient.z = 0.5 * math.pi
+        orient.z = half_pi
         this.height = this.boundMax.x
     end
 

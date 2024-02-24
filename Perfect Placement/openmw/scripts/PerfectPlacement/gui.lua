@@ -37,6 +37,7 @@ local labelsLayout = {
 		makeLabel(), textSpacer,
 		makeLabel(), textSpacer,
 		makeLabel(), textSpacer,
+		makeLabel(), textSpacer,
 	}
 }
 
@@ -46,6 +47,7 @@ local bindingsLayout = {
 	--external = { grow = 0.25 },
 	props = { autoSize = true, size = util.vector2(100, 0), arrange = ui.ALIGNMENT.End },
 	content = ui.content {
+		makeLabel(), textSpacer,
 		makeLabel(), textSpacer,
 		makeLabel(), textSpacer,
 		makeLabel(), textSpacer,
@@ -67,7 +69,7 @@ local controlsGuideLayout = {
 			type = ui.TYPE.Image,
 			props = {
 				relativeSize = util.vector2(1, 1),
-				size = util.vector2(395, 205),
+				size = util.vector2(395, 235),
 				resource = ui.texture { path = 'white' },
 				color = util.color.rgb(0, 0, 0),
 				alpha = 0.8,
@@ -116,7 +118,8 @@ local function showGuide(config)
     setLine(3, l10n('MatchLast'), l10n('HoldPrefix'), config.keybindVertical)
     setLine(4, l10n('OrientToSurface'), '', config.keybindSurfaceAlign)
     setLine(5, l10n('SnapRotation'), '', config.keybindSnap)
-    setLine(6, l10n('DropItem'), '', config.keybind)
+    setLine(6, l10n('DropItem'), '', config.keybindPlace)
+    setLine(7, l10n('HangItem'), input.getKeyName(config.keybindRotate) .. ' + ', config.keybindPlace)
 
 	menu:update()
 end

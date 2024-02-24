@@ -6,6 +6,7 @@ return {
     ["SnapRotation"] = "Snap rotation toggle",
     ["GrabDropItem"] = "Grab / drop item",
     ["DropItem"] = "Drop item",
+    ["HangItem"] = "Hang item",
     ["HoldPrefix"] = "Hold ",
 
     ["ItemLocationLost"] = "Item location was lost. Placement reset.",
