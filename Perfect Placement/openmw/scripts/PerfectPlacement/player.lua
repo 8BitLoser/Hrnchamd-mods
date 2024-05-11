@@ -87,6 +87,26 @@ local function showAngles(prefix, a)
 	ui.showMessage(string.format("%s X %0.3f Y %0.3f Z %0.3f", prefix, a.x, a.y, a.z))
 end
 
+local function castRenderingRayInclLandscape(from, to, opt)
+	-- Workaround for castRenderingRay not working with landscape geometry.
+	local result = nearby.castRenderingRay(from, to, opt)
+	if result.hit or not player.cell.isExterior then
+		return result
+	end
+	
+	local optLandscape = { collisionType = nearby.COLLISION_TYPE.HeightMap }
+	if opt then
+		optLandscape.ignore = opt.ignore
+	end
+	
+	result = nearby.castRay(from, to, optLandscape)
+	if result.hit and result.hitObject == nil then
+		return result
+	end
+
+	return { hit = false }
+end
+
 local function cancelableTimer(delay, func)
 	local data = {}
 	async:newUnsavableSimulationTimer(delay, function()
@@ -172,7 +192,7 @@ local function finalPlacement()
         -- Drop to ground.
         local from = this.activeObj.position + util.vector3(0, 0, -this.height + const_epsilon)
 		local to = from + util.vector3(0, 0, -4096)
-        local ray = nearby.castRenderingRay(from, to, { ignore = this.activeObj })
+        local ray = castRenderingRayInclLandscape(from, to, { ignore = this.activeObj })
 
         if (ray.hit) then
             if (this.verticalMode == 0 and this.groundAlign and not this.freezeAlign) then
@@ -312,7 +332,7 @@ local function onFrame(deltaTime)
     -- Cast ray along initial pickup direction rotated by the 1st person camera.
     local eye = camera.getPosition()
     local rayDir = camera.getViewTransform():inverse() * this.rayDir - eye
-    local ray = nearby.castRenderingRay(eye, eye + rayDir:normalize() * 800, { ignore = this.activeObj })
+    local ray = castRenderingRayInclLandscape(eye, eye + rayDir:normalize() * 800, { ignore = this.activeObj })
 	local hitT = ray.hit and (ray.hitPos - eye):length() / rayDir:length()
     
     -- Limit holding distance to a maxReach * initial distance.
@@ -351,7 +371,7 @@ local function onFrame(deltaTime)
         local clearance = math.max(2, -this.boundMin.z)
         rayDir = util.vector3(clearance * math.sin(this.orientation.y), clearance * math.cos(this.orientation.y), 0)
 		local from = pos + rayDir * -const_epsilon
-        ray = nearby.castRenderingRay(from, from + rayDir * 2, { ignore = this.activeObj })
+        ray = castRenderingRayInclLandscape(from, from + rayDir * 2, { ignore = this.activeObj })
 		hitT = ray.hit and (ray.hitPos - from):length() / clearance
         
         if (ray.hit and hitT < 1) then
@@ -367,7 +387,7 @@ local function onFrame(deltaTime)
     -- Find drop position for shadow spot.
 	--[[
     local dropPos = pos
-    ray = nearby.castRenderingRay(pos, pos + util.vector3(0, 0, -2048), { ignore = this.activeObj })
+    ray = castRenderingRayInclLandscape(pos, pos + util.vector3(0, 0, -2048), { ignore = this.activeObj })
     if (ray.hit) then
         dropPos = ray.hitPos
     end
