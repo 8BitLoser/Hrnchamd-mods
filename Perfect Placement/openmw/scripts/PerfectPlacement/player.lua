@@ -193,7 +193,7 @@ local function finalPlacement()
         end
 	end
     
-	core.sound.playSound3d(itemSound.getDropSound(this.activeObj), this.activeObj)
+	core.sendGlobalEvent("PerfectPlacement:End", this)
     endPlacement()
 end
 
@@ -279,7 +279,6 @@ local function activatePlacement()
         this.freezeAlign = false
 
         this.activeObj = target
-		core.sound.playSound3d(itemSound.getPickupSound(this.activeObj), this.activeObj)
 		core.sendGlobalEvent("PerfectPlacement:Begin", this)
         --#tes3ui.suppressTooltip(true)
         
@@ -461,7 +460,7 @@ end
 
 -- Input
 
-function registerTrigger(key, name)
+local function registerTrigger(key, name)
 	input.registerTrigger({ key = key, l10n = 'PerfectPlacement', name = name, description = name })
 end
 
