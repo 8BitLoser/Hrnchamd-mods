@@ -294,8 +294,9 @@ local function onFrame(deltaTime)
 	if not this.activeObj then return end
 	
     -- Stop if player takes the object.
-    if (not this.activeObj.cell) then
+    if (this.objRemoved or this.activeObj.cell == nil) then
         endPlacement()
+		this.objRemoved = nil
         return
     -- Check for cell change.
     elseif (not this.activeObj.cell:isInSameSpace(player)) then
@@ -551,6 +552,11 @@ end
 
 
 return {
+	eventHandlers = {
+		["PerfectPlacement:ObjRemoved"] = function(e)
+			this.objRemoved = true
+		end
+	},
     engineHandlers = {
 		onKeyPress = onKeyPress,
 		onKeyRelease = onKeyRelease,
