@@ -129,6 +129,14 @@ end
 
 local endPlacement, endPlacementWithReset -- local functions
 
+-- Set rotation frame and effective height for horizontal mode.
+local function setHorizontalMode()
+	this.orientation.x = 0
+	this.orientation.y = 0
+	this.orientation.z = transformToAngles(player.rotation).z
+	this.height = -this.boundMin.z
+end
+
 -- Set rotation frame and effective height for vertical modes.
 local function setVerticalMode(n)
 	local half_pi = 0.5 * math.pi
@@ -217,6 +225,36 @@ local function finalPlacement()
     endPlacement()
 end
 
+-- OpenMW changed bounding boxes to be world AABBs. Get the approximate bound of an unrotated object.
+local function setInitialBound(target, orientation)
+	local bbox = target:getBoundingBox()
+	local localCenter = bbox.center - target.position
+	local boundMin = localCenter - bbox.halfSize
+	local boundMax = localCenter + bbox.halfSize
+
+	-- This is a hacky workaround to approximately extract the base bbox from the world bbox.
+	local absOriX = math.abs(orientation.x)
+	if (absOriX > 1.55 and absOriX < 1.59) then
+		local k = math.floor(0.5 + orientation.y / (0.5 * math.pi))
+		if (k == 0 or k == 4) then
+			this.boundMin = util.vector3(boundMin.x, boundMin.z, -boundMax.y)
+			this.boundMax = util.vector3(boundMax.x, boundMax.z, -boundMin.y)
+		elseif (k == -1 or k == 3) then
+			this.boundMin = util.vector3(boundMin.y, boundMin.z, boundMin.x)
+			this.boundMax = util.vector3(boundMax.y, boundMax.z, boundMax.x)
+		elseif (k == -2 or k == 2) then
+			this.boundMin = util.vector3(-boundMax.x, boundMin.z, boundMin.y)
+			this.boundMax = util.vector3(-boundMin.x, boundMax.z, boundMax.y)
+		elseif (k == -3 or k == 1) then
+			this.boundMin = util.vector3(-boundMax.y, boundMin.z, -boundMax.x)
+			this.boundMax = util.vector3(-boundMin.y, boundMax.z, -boundMin.x)
+		end
+	else
+		this.boundMin = boundMin
+		this.boundMax = boundMax
+	end
+end
+
 -- Copy orientation event handler.
 local function copyLastOri()
     if (this.lastItemOri) then
@@ -263,13 +301,11 @@ local function activatePlacement()
 			types.Actor.setStance(player, types.Actor.STANCE.Nothing)
 		end
 
-        -- Calculate effective bounds including scale.
+		-- Calculate effective bounds including scale.
 		local orientation = transformToAngles(target.rotation)
 		--showAngles("activatePlacement", orientation)
-		local bbox = target:getBoundingBox()
-        this.boundMin = bbox.center - bbox.halfSize
-        this.boundMax = bbox.center + bbox.halfSize
-        matchVerticalMode(orientation, this.boundMin, this.boundMax)
+		setInitialBound(target, orientation)
+		matchVerticalMode(orientation, this.boundMin, this.boundMax)
 
         -- Get exact ray to selection point, relative to 1st person camera.
         local eye = camera.getPosition()
@@ -513,11 +549,8 @@ input.registerTriggerHandler('PerfectPlacement/VerticalMode', async:callback(fun
 		this.verticalMode = 1
 		setVerticalMode(this.verticalMode)
 	else
-		this.orientation.x = 0
-		this.orientation.y = 0
-		this.orientation.z = transformToAngles(player.rotation).z
-		this.height = -this.boundMin.z
 		this.verticalMode = 0
+		setHorizontalMode()
 	end
 end))
 input.registerTriggerHandler('PerfectPlacement/SurfaceAlignMode', async:callback(function()
