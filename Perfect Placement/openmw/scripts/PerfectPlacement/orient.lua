@@ -67,10 +67,11 @@ local function getMaxSteepness(ref)
     return math.rad(isTall(ref) and maxSteepnessTall or maxSteepnessFlat)
 end
 
-function this.orientRef(ref, orientation, rayResult)
+function this.orientRef(ref, orientation, tall, hitNormal)
     local UP = util.vector3(0, 0, 1)
-    local maxSteepness = getMaxSteepness(ref)
-    local newOrientation = mutableVec3(this.rotationDifference(UP, rayResult.hitNormal))
+    --local maxSteepness = getMaxSteepness(ref)
+    local maxSteepness = math.rad(tall and maxSteepnessTall or maxSteepnessFlat)
+    local newOrientation = mutableVec3(this.rotationDifference(UP, hitNormal))
 
     newOrientation.x = util.clamp(newOrientation.x, -maxSteepness, maxSteepness)
     newOrientation.y = util.clamp(newOrientation.y, -maxSteepness, maxSteepness)

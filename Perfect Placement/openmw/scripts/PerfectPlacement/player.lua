@@ -204,7 +204,7 @@ local function finalPlacement()
 
         if (ray.hit) then
             if (this.verticalMode == 0 and this.groundAlign and not this.freezeAlign) then
-                this.orientation = orientModule.orientRef(this.activeObj, this.orientation, ray)
+                this.orientation = orientModule.orientRef(this.activeObj, this.orientation, this.isTall, ray.hitNormal)
             end
 
 			-- Global event data to send.
@@ -253,6 +253,10 @@ local function setInitialBound(target, orientation)
 		this.boundMin = boundMin
 		this.boundMax = boundMax
 	end
+	
+	-- Tallness is used by the align-to-ground feature.
+	local extent = this.boundMax - this.boundMin
+	this.isTall = extent.z > extent.x or extent.z > extent.y
 end
 
 -- Copy orientation event handler.
@@ -380,6 +384,11 @@ local function onFrame(deltaTime)
     end
     -- Add epsilon to ensure the intersection is not inside the model during to floating point precision.
     pos = pos + util.vector3(0, 0, const_epsilon)
+	-- If the hit surface uses double-sided rendering, select a normal that faces the camera.
+	local hitNormal = ray.hitNormal
+	if rayDir:dot(hitNormal) > 0 then
+		hitNormal = hitNormal * -1
+	end
 
     -- Item orientation handling.
     this.wallMount = false
@@ -388,7 +397,7 @@ local function onFrame(deltaTime)
             -- Ground mode. Check if item is directly touching something.
             if (ray.hit and hitT <= this.maxReach and this.groundAlign) then
                 -- Orient item to match placement.
-                this.orientation = orientModule.orientRef(this.activeObj, this.orientation, ray)
+                this.orientation = orientModule.orientRef(this.activeObj, this.orientation, this.isTall, hitNormal)
             else
                 -- Remove any tilt rotation, in an animated manner.
                 local ease = math.max(0.5, 1 - 20 * deltaTime)
@@ -413,8 +422,8 @@ local function onFrame(deltaTime)
         if (ray.hit and hitT < 1) then
             -- Place at minimum distance outside wall, and optionally align rotation with normal.
             pos = ray.hitPos - rayDir
-            if (this.wallAlign and math.abs(ray.hitNormal.z) < 0.2) then
-                this.orientation.y = math.atan2(-ray.hitNormal.x, -ray.hitNormal.y)
+            if (this.wallAlign and math.abs(hitNormal.z) < 0.2) then
+                this.orientation.y = math.atan2(-hitNormal.x, -hitNormal.y)
             end
             this.wallMount = true
         end
