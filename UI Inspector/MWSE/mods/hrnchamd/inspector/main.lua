@@ -4,6 +4,38 @@
     Version: 1.4
 ]]--
 
+ ---@class bs_Inspector_Additions
+ local bsAdd = {}
+
+ bsAdd.rgb = {
+    niceRed = {0.941, 0.38, 0.38}
+ }
+ 
+ function bsAdd.colorPick(element, swatch, v)
+     tes3ui.showColorPickerMenu({
+         initialColor = {r = element.color[1], g = element.color[2], b = element.color[3]},
+         initialAlpha = element.alpha,
+         alpha = true,
+         closeCallback = function (selectedColor, selectedAlpha)
+             local rgb = {selectedColor.r, selectedColor.g, selectedColor.b}
+             element.color = rgb
+             element.alpha = selectedAlpha
+             swatch.color = rgb
+             v.text = string.format("%.3f, %.3f, %.3f, %.3f", rgb[1], rgb[2], rgb[2], selectedAlpha)
+             element:updateLayout()
+         end
+     })
+ end
+
+ function bsAdd.copyProperty(t, property)
+    t:register(tes3.uiEvent.mouseClick, function (e)
+        os.setClipboardText(string.format("\"%s\"", property.name))
+        -- os.setClipboardText(string.format("%s = { %s }", attribute, e.source.text))
+        tes3.messageBox("\"%s\" copied to clipboard.", property.name)
+    end)
+end
+
+
 local INT_MIN = -0x80000000
 local INT_MAX = 0x7FFFFFFF
 local prop_inherit = -0x7F33
@@ -151,6 +183,16 @@ local function copyDataTooltip(e)
 	menu:createLabel{ text = "Click to copy to clipboard." }
 end
 
+function bsAdd.clearContent(attribute, valueBlock, element)
+    if attribute == "contentPath" then
+        local clear = valueBlock:createTextSelect({text = "[Clear]"})
+        clear:register(tes3.uiEvent.mouseClick, function () changeAttrTo(element, attribute, "") end)
+        clear.borderLeft = 90
+        clear.widget.over = bsAdd.rgb.bsNiceRed
+    end
+end
+
+
 local function updateDetail(e)
     local menu = tes3ui.findMenu(this.id_menu)
     local pane = menu:findChild(this.id_detail):findChild(this.id_pane)
@@ -189,64 +231,85 @@ local function updateDetail(e)
         local b = nil
         if (editClass == "int") then
 			quoteValue = false
-            b = valueBlock:createLabel{ text = "<- " }
+            b = valueBlock:createTextSelect{ text = "<- " }
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b.borderRight = 5
             b:register("mouseClick", function () changeAttrNumeric(element, attribute, -10) end)
-            b = valueBlock:createLabel{ text = " - " }
+            b = valueBlock:createTextSelect{ text = " - " }
             b.borderRight = 5
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrNumeric(element, attribute, -1) end)
-            b = valueBlock:createLabel{ text = " + " }
+            b = valueBlock:createTextSelect{ text = " + " }
             b.borderRight = 5
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrNumeric(element, attribute, 1) end)
-            b = valueBlock:createLabel{ text = " +>" }
+            b = valueBlock:createTextSelect{ text = " +>" }
             b.borderRight = 5
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrNumeric(element, attribute, 10) end)
-            b = valueBlock:createLabel{ text = "Reset" }
+            b = valueBlock:createTextSelect{ text = "Reset" }
             b.borderLeft = 15
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrTo(element, attribute, nil) end)
         elseif (editClass == "float") then
 			quoteValue = false
-            b = valueBlock:createLabel{ text = "<- " }
+            b = valueBlock:createTextSelect{ text = "<- " }
             b.borderRight = 5
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrNumeric(element, attribute, -0.1) end)
-            b = valueBlock:createLabel{ text = " - " }
+            b = valueBlock:createTextSelect{ text = " - " }
             b.borderRight = 5
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrNumeric(element, attribute, -0.01) end)
-            b = valueBlock:createLabel{ text = " + " }
+            b = valueBlock:createTextSelect{ text = " + " }
             b.borderRight = 5
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrNumeric(element, attribute, 0.01) end)
-            b = valueBlock:createLabel{ text = " +>" }
+            b = valueBlock:createTextSelect{ text = " +>" }
             b.borderRight = 5
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrNumeric(element, attribute, 0.1) end)
-            b = valueBlock:createLabel{ text = "Reset" }
+            b = valueBlock:createTextSelect{ text = "Reset" }
             b.borderLeft = 15
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrTo(element, attribute, nil) end)
         elseif (editClass == "bool") then
 			quoteValue = false
-            b = valueBlock:createLabel{ text = "false" }
+            b = valueBlock:createTextSelect{ text = "false" }
             b.borderRight = 5
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrTo(element, attribute, false) end)
-            b = valueBlock:createLabel{ text = "true" }
+            b = valueBlock:createTextSelect{ text = "true" }
             b.borderRight = 5
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrTo(element, attribute, true) end)
-            b = valueBlock:createLabel{ text = "Reset" }
+            b = valueBlock:createTextSelect{ text = "Reset" }
             b.borderLeft = 15
+            b.widget.over = bsAdd.rgb.bsNiceRed
             b:register("mouseClick", function () changeAttrTo(element, attribute, nil) end)
         elseif (type(editClass) == "table") then
             for _, k in ipairs(editClass) do
-                b = valueBlock:createLabel{ text = tostring(k) }
+                b = valueBlock:createTextSelect{ text = tostring(k) }
                 b.borderRight = 5
+                b.widget.over = bsAdd.rgb.bsNiceRed
                 b:register("mouseClick", function () changeAttrTo(element, attribute, k) end)
             end
         end
 
+        ---Add Clear button to clear contentPath
+        bsAdd.clearContent(attribute, valueBlock, element)
+
 		local copyFmt = quoteValue and "%s = \"%s\"" or "%s = %s"
+
+
         v:register("mouseClick", function (e)
 			os.setClipboardText(string.format(copyFmt, attribute, e.source.text))
 			tes3.messageBox{ message = "Value copied to clipboard." }
 		end)
         v:register("help", copyDataTooltip)
     end
+
+   
 
     local function addColourDetail(attribute)
         local c = element.color
@@ -265,10 +328,19 @@ local function updateDetail(e)
         v.minWidth = 160
         v.borderLeft = 15
 
+        ---Add colorPicker to swatch
+        swatch:register(tes3.uiEvent.mouseClick, function (e) bsAdd.colorPick(element, swatch, v) end)
+
         v:register("mouseClick", function (e)
-			os.setClipboardText(string.format("%s = { %s }", attribute, e.source.text))
+            ---Updated copy to match element.color (removed alpha)
+			os.setClipboardText(string.format("%s = { %.3f, %.3f, %.3f }", attribute, element.color[1], element.color[2], element.color[3]))
+			-- os.setClipboardText(string.format("%s = { %s }", attribute, e.source.text))
 			tes3.messageBox{ message = "Value copied to clipboard." }
 		end)
+        swatch:register(tes3.uiEvent.help, function (e)
+            local tooltip = tes3ui.createTooltipMenu()
+            tooltip:createLabel({id = "ColorPick", text = "Click to open Color Picker"})
+        end)
         v:register("help", copyDataTooltip)
     end
 
@@ -335,8 +407,10 @@ local function updateDetail(e)
 
     -- Create labels for properties.
     for _, property in pairs(element.properties) do
-        local t = labels:createLabel{ text = property.name }
+        local t = labels:createTextSelect{ text = property.name }
         t.absolutePosAlignX = 1.0
+
+        bsAdd.copyProperty(t, property)
 
         local valueBlock = values:createBlock{}
         valueBlock.autoWidth = true
